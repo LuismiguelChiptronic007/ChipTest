@@ -1,0 +1,134 @@
+# ChipTest
+
+Sistema web da Chiptronic para cadastro de códigos de veículos e acompanhamento de testes.
+
+## Estrutura
+
+- `frontend/`: aplicação Nuxt 3 e rotas de API Nitro, executadas como Cloudflare Worker.
+- `backend/`: serviços e regras de negócio TypeScript compartilhadas pelas rotas.
+- `database/migrations/`: migrations SQL compatíveis com SQLite/D1.
+
+## Requisitos
+
+- Node.js 20 ou superior e npm.
+- Conta Cloudflare e Wrangler autenticado (`npx wrangler login`) para provisionar recursos remotos.
+- Conta Resend e domínio/endereço verificado para enviar e-mails de redefinição de senha.
+
+## Desenvolvimento local
+
+1. Instale as dependências:
+
+   ```powershell
+   Set-Location backend
+   npm install
+   Set-Location ..\frontend
+   npm install
+   ```
+
+2. Configure os valores secretos locais:
+
+   ```powershell
+   Copy-Item .dev.vars.example .dev.vars
+   ```
+
+   Defina `SESSION_SECRET` com uma string aleatória de pelo menos 32 caracteres. Configure `RESEND_API_KEY` para habilitar o envio de redefinição de senha. `.dev.vars` não deve ser versionado.
+
+3. Aplique a migration no D1 local e inicie o Nuxt:
+
+   ```powershell
+   npm run db:local:migrate
+   npm run dev
+   ```
+
+   A configuração do Worker e do binding D1 está em `frontend/wrangler.jsonc`. O servidor Nuxt de desenvolvimento carrega esse arquivo por meio de `nitro-cloudflare-dev`.
+
+## D1 remoto e publicação
+
+O arquivo Wrangler usa o nome `chiptest-db`, separado de outros bancos da conta. Crie esse banco remoto e copie o `database_id` exibido para `frontend/wrangler.jsonc`:
+
+```powershell
+Set-Location frontend
+npx wrangler d1 create chiptest-db
+```
+
+Depois aplique as migrations:
+
+```powershell
+npm run db:remote:migrate
+```
+
+Configure `SESSION_SECRET` e `RESEND_API_KEY` como secrets do Worker (não em `vars` nem em arquivos versionados):
+
+```powershell
+npx wrangler secret put SESSION_SECRET --config wrangler.jsonc
+npx wrangler secret put RESEND_API_KEY --config wrangler.jsonc
+```
+
+Antes de publicar, atualize `APP_URL` em `wrangler.jsonc` para o domínio público da aplicação; em produção, não mantenha `http://localhost:3000`.
+
+Gere os tipos do Worker, valide e publique:
+
+```powershell
+npx wrangler types
+npm run typecheck
+npm run build
+npx wrangler deploy --config wrangler.jsonc
+```
+
+## Primeiro administrador
+
+O cadastro público sempre cria usuários com papel `campo` e `ativo = 0`. Para promover a primeira conta, cadastre-a normalmente e execute no console D1 o comando abaixo, substituindo o e-mail:
+
+```sql
+UPDATE usuarios
+SET papel = 'admin', ativo = 1, atualizado_em = datetime('now')
+WHERE email = 'admin@chiptronic.com.br';
+```
+
+O usuário poderá entrar e administrar os demais perfis pela tela `/admin/usuarios`. A autorização é feita nas rotas Nitro após validar a sessão e consultar o estado atual do usuário no D1; D1 não oferece RLS.
+
+## Autenticação e e-mail
+
+- As sessões usam cookie `HttpOnly`, `SameSite=Lax`, duração limitada e token assinado com `SESSION_SECRET`.
+- Senhas são armazenadas com PBKDF2 e salt individual.
+- Usuários inativos só podem aguardar a liberação do administrador.
+- A redefinição de senha depende de `RESEND_API_KEY` e dos dados `APP_URL`/`EMAIL_FROM` em `wrangler.jsonc`.
+
+## Banco de dados
+
+O projeto usa Cloudflare D1 (SQLite), não Supabase/PostgreSQL. As rotas Nitro validam a sessão e o papel atual do usuário no banco antes de permitir operações. D1 não oferece RLS; portanto, o controle equivalente é aplicado no servidor:
+
+- Todos os perfis ativos autenticados podem consultar os códigos.
+- Admin e engenharia podem criar, editar, duplicar e excluir logicamente.
+- Bancada e campo têm acesso de leitura.
+
+Para aplicar todas as migrations no banco local, execute `npm run db:local:migrate` dentro de `frontend/`. O comando `npm run db:remote:migrate` altera o banco remoto e deve ser usado somente quando você decidir publicar as mudanças.
+
+## Catálogo e painel
+
+A Fase 3 inclui lista paginada com busca, filtros por marca/status/setor, ordenação, sincronização pela URL, seleção em lote, exportação CSV, alternância tabela/cards e exclusão lógica com histórico. O detalhe do código exibe as sete seções técnicas, o histórico de alterações e os estados vazios de testes/importação. O painel busca métricas, distribuição de status e cadastros recentes diretamente do D1.
+
+O filtro por setor considera o setor do usuário que cadastrou o código, pois o modelo atual não possui um setor próprio no registro do veículo.
+
+### Dados locais de demonstração
+
+Depois de aplicar as migrations localmente, gere 30 códigos fictícios para testar lista e painel:
+
+```powershell
+Set-Location frontend
+npm run seed
+```
+
+Os registros usam identificadores e códigos `CT-DEMO-*`, são marcados em `codigos_demo_seed` e inseridos apenas no D1 local. Para ocultar esses registros do catálogo sem tocar nos demais cadastros:
+
+```powershell
+npm run seed:clear
+```
+
+O seed é idempotente: executar `npm run seed` novamente restaura/atualiza os mesmos registros de demonstração.
+
+## Design system
+
+Abra `/design-system` para visualizar os tokens, componentes de interface, estados e prévias dos temas claro e escuro. A interface usa Inter, JetBrains Mono e ícones Lucide; as cores semânticas e neutras estão centralizadas em `frontend/assets/css/main.css` e expostas como tokens Tailwind.
+
+As telas de autenticação compartilham o layout responsivo `AuthLayout`. As áreas autenticadas usam `AppShell`, com navegação adaptável, alternância de tema, busca global pelo atalho `Ctrl+K` e menu da conta. O painel apresenta dados reais do catálogo D1. Testes, ocorrências e importações serão entregues nas próximas fases.

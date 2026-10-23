@@ -1,0 +1,3 @@
+<template>
+  <CodigosCodigoForm />
+</template>

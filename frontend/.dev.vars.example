@@ -1,0 +1,4 @@
+# Gere um segredo aleatório forte para desenvolvimento local (não use em produção).
+SESSION_SECRET=gere-uma-chave-aleatoria-com-pelo-menos-32-caracteres
+# Configure uma chave do Resend para habilitar recuperação de senha por e-mail.
+RESEND_API_KEY=

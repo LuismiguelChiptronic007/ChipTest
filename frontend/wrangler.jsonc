@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "chiptest",
+  "main": ".output/server/index.mjs",
+  "compatibility_date": "2026-10-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".output/public",
+    "binding": "ASSETS"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "chiptest-db",
+      "database_id": "66361310-4f88-44fb-9edf-6759688b191f",
+      "migrations_dir": "../database/migrations"
+    }
+  ],
+  "vars": {
+    "APP_URL": "http://localhost:3000",
+    "EMAIL_FROM": "ChipTest <onboarding@resend.dev>"
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}
