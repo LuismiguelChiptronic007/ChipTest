@@ -12,7 +12,9 @@ Sistema web da Chiptronic para cadastro de códigos de veículos e acompanhament
 
 O `frontend/nuxt.config.ts` seleciona o preset Nitro `vercel` quando a variável `VERCEL=1` está presente (definida automaticamente pela Vercel). Assim, `nuxt build` gera a saída de funções da Vercel em vez de uma saída Cloudflare que não contém a pasta estática `dist`. No projeto Vercel, use **Framework Preset: Nuxt.js**, **Root Directory: `frontend`**, comando de build `npm run build` e deixe **Output Directory** vazio/automático; não configure `dist`.
 
-Isso configura o formato do build, mas não substitui o D1: as rotas Nitro ainda dependem de `event.context.cloudflare.env.DB`. Elas não estarão funcionais na Vercel até a camada de dados receber uma integração acessível nesse runtime.
+Na Vercel, o servidor acessa o mesmo D1 remoto pela API oficial do Cloudflare. Configure, no projeto Vercel, as variáveis de ambiente `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_D1_DATABASE_ID` e `CLOUDFLARE_API_TOKEN`, além de `SESSION_SECRET` (mínimo de 32 caracteres), `APP_URL` com a URL pública da Vercel e `EMAIL_FROM`. `RESEND_API_KEY` é necessária para habilitar redefinição de senha. Crie um API Token Cloudflare com permissões D1 Read e D1 Write, restrinja-o à conta e ao banco sempre que a interface permitir, e armazene-o somente como variável secreta na Vercel; nunca o coloque no código ou no cliente. No Cloudflare Worker, a aplicação continua usando o binding D1 diretamente.
+
+O adaptador Vercel usa a API `POST /accounts/{account_id}/d1/database/{database_id}/query`, enviando instruções preparadas e lotes; assim, não requer migrar o banco nem duplicar os dados. Se as variáveis do banco estiverem ausentes, as rotas retornam uma mensagem 503 indicando quais configurações faltam.
 
 ## Requisitos
 

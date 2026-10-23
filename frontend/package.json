@@ -13,7 +13,7 @@
     "seed": "node scripts/seed-codigos.mjs",
     "seed:clear": "node scripts/seed-codigos.mjs --clear",
     "typecheck": "nuxt typecheck",
-    "test": "vitest run --config frontend/vitest.config.ts --root .. backend/src/services/importacoes.test.ts backend/src/services/testes.test.ts frontend/server/utils/importacao-docx.test.ts"
+    "test": "vitest run --config frontend/vitest.config.ts --root .. backend/src/services/importacoes.test.ts backend/src/services/testes.test.ts frontend/server/utils/importacao-docx.test.ts frontend/server/utils/database.test.ts"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
