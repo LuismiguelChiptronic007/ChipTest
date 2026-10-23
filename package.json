@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "domhandler": "^6.0.1",
+    "htmlparser2": "^12.0.0"
+  }
+}

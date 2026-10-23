@@ -52,7 +52,12 @@ export default defineNuxtConfig({
     tsConfig: {
       compilerOptions: {
         types: ['@cloudflare/workers-types', 'node'],
+        paths: {
+          htmlparser2: ['../node_modules/htmlparser2'],
+          domhandler: ['../node_modules/domhandler'],
+        },
       },
+      exclude: ['../../backend/**/*.test.ts'],
     },
   },
 })

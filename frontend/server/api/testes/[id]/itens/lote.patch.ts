@@ -19,7 +19,11 @@ export default defineEventHandler(async (event) => {
   await atualizarItensTeste(
     db,
     id.data,
-    entrada.data.itens.map(item => ({ ...item, resultado: entrada.data.resultado, observacao: null })),
+    entrada.data.itens.map(({ id: itemId }: { id: string }) => ({
+      id: itemId,
+      resultado: entrada.data.resultado,
+      observacao: null,
+    })),
     usuario.id,
     dados.teste.status !== 'em_andamento',
   )

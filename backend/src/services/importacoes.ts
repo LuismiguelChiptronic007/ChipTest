@@ -176,7 +176,7 @@ export function separarSecoes(html: string): SecaoAnalisada[] {
   const elementoBody = elementoHtml && isTag(elementoHtml)
     ? elementoHtml.children.find(node => isTag(node) && node.name === 'body')
     : undefined
-  const nodes = elementoBody && isTag(elementoBody) ? elementoBody.children : parsed.children
+  const nodes: AnyNode[] = elementoBody && isTag(elementoBody) ? elementoBody.children : parsed.children
   const secoes: SecaoAnalisada[] = []
   let secaoAtiva: SecaoAnalisada | null = null
   let ordemPorTipo = new Map<TipoSecaoImportacao, number>()

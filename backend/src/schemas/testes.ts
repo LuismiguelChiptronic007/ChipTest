@@ -23,10 +23,15 @@ export const criarTesteSchema = z.object({
   observacoes: z.string().trim().max(5000, 'As observações devem ter no máximo 5.000 caracteres.').nullable().optional(),
 })
 
-export const atualizarItemTesteSchema = z.object({
+const atualizarItemTesteBaseSchema = z.object({
   resultado: resultadoTesteItemSchema,
   observacao: z.string().trim().max(2000, 'A observação deve ter no máximo 2.000 caracteres.').nullable().optional(),
-}).superRefine((item, contexto) => {
+})
+
+export const atualizarItemTesteSchema = atualizarItemTesteBaseSchema.superRefine((
+  item: z.infer<typeof atualizarItemTesteBaseSchema>,
+  contexto: z.RefinementCtx,
+) => {
   if (item.resultado === 'reprovado' && !item.observacao?.trim()) {
     contexto.addIssue({
       code: 'custom',
@@ -36,10 +41,15 @@ export const atualizarItemTesteSchema = z.object({
   }
 })
 
-export const atualizarItensLoteSchema = z.object({
+const atualizarItensLoteBaseSchema = z.object({
   itens: z.array(z.object({ id: z.string().uuid() })).min(1).max(500),
   resultado: resultadoTesteItemSchema,
-}).superRefine((input, contexto) => {
+})
+
+export const atualizarItensLoteSchema = atualizarItensLoteBaseSchema.superRefine((
+  input: z.infer<typeof atualizarItensLoteBaseSchema>,
+  contexto: z.RefinementCtx,
+) => {
   if (input.resultado === 'reprovado') {
     contexto.addIssue({ code: 'custom', path: ['resultado'], message: 'A reprovação exige observação por item.' })
   }
@@ -49,10 +59,14 @@ export const finalizarTesteSchema = z.object({
   status: z.enum(['aprovado', 'reprovado', 'cancelado']),
 })
 
-export const atualizarTesteSchema = z.object({
+const atualizarTesteBaseSchema = z.object({
   veiculoInfo: z.string().trim().max(500, 'As informações do veículo devem ter no máximo 500 caracteres.').nullable().optional(),
   observacoes: z.string().trim().max(5000, 'As observações devem ter no máximo 5.000 caracteres.').nullable().optional(),
-}).refine(input => input.veiculoInfo !== undefined || input.observacoes !== undefined, {
+})
+
+export const atualizarTesteSchema = atualizarTesteBaseSchema.refine((
+  input: z.infer<typeof atualizarTesteBaseSchema>,
+) => input.veiculoInfo !== undefined || input.observacoes !== undefined, {
   message: 'Informe ao menos um campo para atualizar.',
 })
 
