@@ -46,6 +46,7 @@ export default {
         },
         neutral: {
           DEFAULT: 'hsl(var(--neutral) / <alpha-value>)',
+          mark: 'hsl(var(--neutral-mark) / <alpha-value>)',
           surface: 'hsl(var(--neutral-surface) / <alpha-value>)',
         },
         info: {

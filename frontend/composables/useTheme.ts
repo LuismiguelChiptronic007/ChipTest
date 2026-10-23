@@ -3,7 +3,7 @@ type Theme = 'light' | 'dark'
 const THEME_STORAGE_KEY = 'chiptest-theme'
 
 export function useTheme() {
-  const theme = useState<Theme>('chiptest-theme', () => 'light')
+  const theme = useState<Theme>('chiptest-theme', () => 'dark')
   const isDark = computed(() => theme.value === 'dark')
   let systemListenerRegistered = false
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, Cpu, FileText, Save, ShieldCheck } from '@lucide/vue'
+import { ArrowLeft, CarFront, FileText, Save, ShieldCheck } from '@lucide/vue'
 import { codigoSchema } from '@backend/schemas/codigos'
 import { z } from 'zod'
 
@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<{
 
 const form = reactive({
   codigo: '',
+  
   marca: '',
   modelo: '',
   motor: '',
@@ -142,7 +143,7 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', antesDeFechar))
         <form class="space-y-5" @submit.prevent="salvar">
           <UiCard>
             <div class="flex items-start gap-3 border-b border-border pb-4">
-              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-info-surface text-info"><Cpu :size="17" aria-hidden="true" /></span>
+              <span class="grid h-9 w-9 shrink-0 place-items-center rounded-control bg-info-surface text-info"><CarFront :size="17" aria-hidden="true" /></span>
               <div>
                 <h2 class="text-sm font-bold">Identificação do veículo</h2>
                 <p class="mt-1 text-xs text-foreground-muted">Informações essenciais para localizar e diferenciar este cadastro.</p>

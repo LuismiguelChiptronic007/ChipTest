@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { Activity, ArrowLeft, Copy, FileText, History, Pencil, RefreshCw, ShieldAlert, Trash2 } from '@lucide/vue'
+import { Activity, ArrowLeft, CheckCircle2, Clock3, Copy, FileText, History, MinusCircle, Pencil, RefreshCw, ShieldAlert, Trash2, Upload, XCircle } from '@lucide/vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { z } from 'zod'
+import { tipoSecaoBancoSchema, type TipoSecaoBanco } from '@backend/schemas/importacoes'
 import type { AlteracaoCodigo, CodigoRecord } from '@backend/services/codigos'
 
 const route = useRoute()
@@ -12,8 +14,47 @@ const erro = ref('')
 const codigo = ref<CodigoRecord | null>(null)
 const alteracoes = ref<AlteracaoCodigo[]>([])
 const carregandoHistorico = ref(false)
+const carregandoSecoes = ref(false)
+const carregandoTestes = ref(false)
 const aba = ref<'secoes' | 'alteracoes'>('secoes')
-const secaoSelecionada = ref('dados_informacao_central')
+const secaoSelecionada = ref<TipoSecaoBanco>('dados_central')
+const tiposTeste = ['bancada', 'campo'] as const
+const testesCodigo = ref<Array<{
+  id: string
+  tipo: 'bancada' | 'campo'
+  numero: number
+  status: 'em_andamento' | 'aprovado' | 'reprovado' | 'cancelado'
+  data_inicio: string
+  responsavel_nome: string
+  total_itens: number
+  itens_testados: number
+  itens_aprovados: number
+  itens_reprovados: number
+  percentual_aprovado: number
+}>>([])
+const comparacoes = ref<Array<{
+  codigo_item_id: string
+  nome_snapshot: string
+  numero_campo: number
+  numero_bancada_reprovado: number
+}>>([])
+const ultimosResultados = ref<Array<{
+  codigo_item_id: string
+  tipo: 'bancada' | 'campo'
+  numero: number
+  status_teste: 'em_andamento' | 'aprovado' | 'reprovado' | 'cancelado'
+  resultado: 'nao_testado' | 'aprovado' | 'reprovado' | 'nao_se_aplica'
+}>>([])
+const itensImportados = ref<Array<{
+  id: string
+  tipo_secao: TipoSecaoBanco
+  nome_completo: string
+  nome_original: string
+  nome_pt: string | null
+  ordem: number
+  versao: number
+  atualizado_em: string
+}>>([])
 const modalExclusao = ref(false)
 const removendo = ref(false)
 const erroExclusao = ref('')
@@ -21,8 +62,9 @@ const notificacaoSalva = ref(false)
 const descricaoNotificacao = ref('')
 
 const secoes = [
-  { id: 'dados_informacao_central', titulo: 'Dados da informação da central', abrev: 'Dados da central' },
-  { id: 'sensores_estados', titulo: 'Sensores e estados', abrev: 'Sensores e estados' },
+  { id: 'dados_central', titulo: 'Dados da central', abrev: 'Dados da central' },
+  { id: 'sensores', titulo: 'Sensores', abrev: 'Sensores' },
+  { id: 'estados', titulo: 'Estados', abrev: 'Estados' },
   { id: 'falhas', titulo: 'Falhas', abrev: 'Falhas' },
   { id: 'atuadores', titulo: 'Atuadores', abrev: 'Atuadores' },
   { id: 'ajuste', titulo: 'Ajuste', abrev: 'Ajuste' },
@@ -47,7 +89,7 @@ const codigoResponseSchema = z.object({
     ultimo_teste: z.string().nullable(),
     ultimo_teste_data: z.string().nullable(),
     ultimo_teste_tipo: z.enum(['bancada', 'campo']).nullable(),
-    status_teste: z.enum(['em_andamento', 'aprovado', 'reprovado']).nullable(),
+    status_teste: z.enum(['em_andamento', 'aprovado', 'reprovado', 'cancelado']).nullable(),
     ocorrencias_abertas: z.number().int().nonnegative(),
   }),
 })
@@ -64,14 +106,21 @@ const historicoResponseSchema = z.object({
 
 const podeGerenciar = computed(() => auth.can('codigos:gerenciar'))
 const podeExcluir = computed(() => auth.can('codigos:excluir'))
+const podeIniciarTeste = computed(() => Boolean(auth.perfil.value?.ativo))
 const secaoAtiva = computed(() => secoes.find(secao => secao.id === secaoSelecionada.value) ?? secoes[0]!)
+const itensSecaoAtiva = computed(() => itensImportados.value.filter(item => item.tipo_secao === secaoAtiva.value.id))
+
+function quantidadeItens(tipo: string) {
+  return itensImportados.value.filter(item => item.tipo_secao === tipo).length
+}
 
 const status = computed(() => {
-  if (codigo.value?.ocorrencias_abertas) return { label: 'Com falhas abertas', tone: 'danger' as const }
-  if (codigo.value?.status_teste === 'aprovado') return { label: 'Aprovado', tone: 'success' as const }
-  if (codigo.value?.status_teste === 'reprovado') return { label: 'Reprovado', tone: 'danger' as const }
-  if (codigo.value?.status_teste === 'em_andamento') return { label: 'Em andamento', tone: 'warning' as const }
-  return { label: 'Sem testes', tone: 'neutral' as const }
+  if (codigo.value?.ocorrencias_abertas) return { label: 'Com falhas abertas', tone: 'danger' as const, icon: XCircle }
+  if (codigo.value?.status_teste === 'aprovado') return { label: 'Aprovado', tone: 'success' as const, icon: CheckCircle2 }
+  if (codigo.value?.status_teste === 'reprovado') return { label: 'Reprovado', tone: 'danger' as const, icon: XCircle }
+  if (codigo.value?.status_teste === 'em_andamento') return { label: 'Em andamento', tone: 'warning' as const, icon: Clock3 }
+  if (codigo.value?.status_teste === 'cancelado') return { label: 'Cancelado', tone: 'neutral' as const, icon: MinusCircle }
+  return { label: 'Sem testes', tone: 'neutral' as const, icon: ShieldAlert }
 })
 
 const rotulosCampos: Record<string, string> = {
@@ -117,10 +166,104 @@ async function carregarCodigo() {
     const resposta = codigoResponseSchema.safeParse(await $fetch<unknown>(`/api/codigos/${codigoId.value}`))
     if (!resposta.success) throw new Error('Os dados recebidos do código estão em um formato inválido.')
     codigo.value = resposta.data.codigo
+    await Promise.all([carregarSecoes(), carregarTestes()])
   } catch (error: unknown) {
     erro.value = mensagemDeErro(error, 'Não foi possível carregar este código.')
   } finally {
     carregando.value = false
+  }
+}
+
+async function carregarTestes() {
+  carregandoTestes.value = true
+  try {
+    const resposta = z.object({
+      testes: z.array(z.object({
+        id: z.string().uuid(),
+        tipo: z.enum(['bancada', 'campo']),
+        numero: z.number().int().positive(),
+        status: z.enum(['em_andamento', 'aprovado', 'reprovado', 'cancelado']),
+        data_inicio: z.string(),
+        responsavel_nome: z.string(),
+        total_itens: z.number().int().nonnegative(),
+        itens_testados: z.number().int().nonnegative(),
+        itens_aprovados: z.number().int().nonnegative(),
+        itens_reprovados: z.number().int().nonnegative(),
+        percentual_aprovado: z.number().int().nonnegative(),
+      })),
+      ultimos_resultados: z.array(z.object({
+        codigo_item_id: z.string().uuid(),
+        tipo: z.enum(['bancada', 'campo']),
+        numero: z.number().int().positive(),
+        status_teste: z.enum(['em_andamento', 'aprovado', 'reprovado', 'cancelado']),
+        resultado: z.enum(['nao_testado', 'aprovado', 'reprovado', 'nao_se_aplica']),
+        data_inicio: z.string(),
+      })),
+      comparacoes: z.array(z.object({
+        codigo_item_id: z.string().uuid(),
+        nome_snapshot: z.string(),
+        numero_campo: z.number().int(),
+        numero_bancada_reprovado: z.number().int(),
+      })),
+    }).safeParse(await $fetch<unknown>(`/api/codigos/${codigoId.value}/testes`))
+    if (!resposta.success) throw new Error('O histórico de testes recebido está em formato inválido.')
+    testesCodigo.value = resposta.data.testes
+    ultimosResultados.value = resposta.data.ultimos_resultados
+    comparacoes.value = resposta.data.comparacoes
+  } catch (error: unknown) {
+    erro.value = mensagemDeErro(error, 'Não foi possível carregar o histórico de testes.')
+  } finally {
+    carregandoTestes.value = false
+  }
+}
+
+function resultadoRecente(itemId: string, tipo: 'bancada' | 'campo') {
+  return ultimosResultados.value.find(resultado => resultado.codigo_item_id === itemId && resultado.tipo === tipo) ?? null
+}
+
+function rotuloResultado(resultado: NonNullable<ReturnType<typeof resultadoRecente>>) {
+  if (resultado.resultado === 'aprovado') return 'Aprovado'
+  if (resultado.resultado === 'reprovado') return 'Reprovado'
+  if (resultado.resultado === 'nao_se_aplica') return 'N/A'
+  return 'Não testado'
+}
+
+function iconeResultado(resultado: NonNullable<ReturnType<typeof resultadoRecente>>) {
+  if (resultado.resultado === 'aprovado') return CheckCircle2
+  if (resultado.resultado === 'reprovado') return XCircle
+  if (resultado.resultado === 'nao_se_aplica') return MinusCircle
+  return Clock3
+}
+
+function tomResultado(resultado: NonNullable<ReturnType<typeof resultadoRecente>>) {
+  if (resultado.resultado === 'aprovado') return 'text-success'
+  if (resultado.resultado === 'reprovado') return 'text-danger'
+  if (resultado.resultado === 'nao_se_aplica') return 'text-neutral'
+  return 'text-foreground-muted'
+}
+
+async function carregarSecoes() {
+  if (!codigoId.value) return
+  carregandoSecoes.value = true
+  try {
+    const resposta = z.object({
+      itens: z.array(z.object({
+        id: z.string().uuid(),
+        tipo_secao: tipoSecaoBancoSchema,
+        nome_completo: z.string(),
+        nome_original: z.string(),
+        nome_pt: z.string().nullable(),
+        ordem: z.number().int().positive(),
+        versao: z.number().int().positive(),
+        atualizado_em: z.string(),
+      })),
+    }).safeParse(await $fetch<unknown>(`/api/codigos/${codigoId.value}/itens`))
+    if (!resposta.success) throw new Error('Os itens recebidos estão em um formato inválido.')
+    itensImportados.value = resposta.data.itens
+  } catch (error: unknown) {
+    erro.value = mensagemDeErro(error, 'Não foi possível carregar os itens técnicos.')
+  } finally {
+    carregandoSecoes.value = false
   }
 }
 
@@ -182,15 +325,21 @@ onMounted(() => {
 </script>
 
 <template>
-  <AppShell :title="codigo ? `${codigo.marca} ${codigo.modelo}` : 'Detalhe do código'" description="Informações técnicas, conteúdo importado e histórico de atividade do veículo.">
+  <AppShell :title="codigo ? `${codigo.marca} ${codigo.modelo}` : 'Detalhe do código'" description="Informações técnicas, itens de diagnóstico e histórico de atividade do veículo.">
     <template #actions>
       <NuxtLink to="/codigos" class="interactive inline-flex min-h-10 items-center gap-2 rounded-control border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-raised">
         <ArrowLeft :size="15" aria-hidden="true" /><span class="hidden sm:inline">Voltar aos códigos</span><span class="sm:hidden">Voltar</span>
       </NuxtLink>
       <template v-if="codigo && podeGerenciar">
+        <NuxtLink :to="`/importacoes/nova?codigo=${codigo.id}`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover">
+          <Upload :size="14" aria-hidden="true" /><span>Importar Word</span>
+        </NuxtLink>
         <UiButton variant="secondary" size="sm" @click="duplicarCodigo"><template #icon><Copy :size="14" aria-hidden="true" /></template><span class="hidden sm:inline">Duplicar</span></UiButton>
         <NuxtLink :to="`/codigos/${codigo.id}/editar`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-raised"><Pencil :size="14" aria-hidden="true" /> Editar</NuxtLink>
       </template>
+        <NuxtLink v-if="codigo && podeIniciarTeste" :to="`/codigos/${codigo.id}/testes/novo`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover">
+          <Activity :size="14" aria-hidden="true" /> Novo teste
+        </NuxtLink>
       <UiButton v-if="codigo && podeExcluir" variant="danger" size="sm" aria-label="Excluir código" @click="modalExclusao = true"><template #icon><Trash2 :size="14" aria-hidden="true" /></template><span class="hidden sm:inline">Excluir</span></UiButton>
     </template>
 
@@ -209,7 +358,7 @@ onMounted(() => {
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2.5">
               <p class="font-mono text-xl font-bold tracking-tight text-primary sm:text-2xl">{{ codigo.codigo }}</p>
-              <UiBadge :tone="status.tone" dot>{{ status.label }}</UiBadge>
+              <UiBadge :tone="status.tone"><component :is="status.icon" :size="14" aria-hidden="true" />{{ status.label }}</UiBadge>
             </div>
             <h2 class="mt-2 text-lg font-bold tracking-tight">{{ codigo.marca }} {{ codigo.modelo }}</h2>
             <p class="mt-1 text-sm text-foreground-muted">{{ codigo.motor || 'Motorização não informada' }}<span v-if="codigo.ano"> · Ano {{ codigo.ano }}</span></p>
@@ -239,25 +388,46 @@ onMounted(() => {
             class="interactive flex min-h-10 w-full items-center justify-between gap-2 rounded-control px-3 text-left text-xs font-medium"
             :class="secaoSelecionada === secao.id ? 'bg-info-surface text-info' : 'text-foreground-muted hover:bg-surface-raised hover:text-foreground'"
             :aria-current="secaoSelecionada === secao.id ? 'page' : undefined"
-            @click="secaoSelecionada = secao.id"
+            @click="secaoSelecionada = secao.id as TipoSecaoBanco"
           >
-            <span class="truncate">{{ secao.abrev }}</span><span class="h-1.5 w-1.5 shrink-0 rounded-full bg-neutral/60" :aria-label="`${secao.titulo}: sem conteúdo`" />
+            <span class="truncate">{{ secao.abrev }}</span>
+            <UiBadge :tone="quantidadeItens(secao.id) ? 'success' : 'neutral'">{{ quantidadeItens(secao.id) }}</UiBadge>
           </button>
         </nav>
 
         <UiCard class="min-h-[340px]">
           <div class="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
-            <div><p class="text-[10px] font-bold uppercase tracking-[0.13em] text-foreground-subtle">Seção técnica</p><h2 class="mt-1 text-base font-bold">{{ secaoAtiva.titulo }}</h2></div>
-            <UiBadge tone="neutral">Não importado</UiBadge>
+            <div><p class="text-[10px] font-bold uppercase tracking-[0.13em] text-foreground-subtle">Itens técnicos</p><h2 class="mt-1 text-base font-bold">{{ secaoAtiva.titulo }}</h2></div>
+            <div class="flex flex-wrap items-center gap-2">
+              <UiBadge :tone="itensSecaoAtiva.length ? 'success' : 'neutral'">{{ itensSecaoAtiva.length }} {{ itensSecaoAtiva.length === 1 ? 'item' : 'itens' }}</UiBadge>
+              <NuxtLink v-if="podeGerenciar" :to="`/importacoes/nova?codigo=${codigo?.id}`" class="interactive inline-flex min-h-8 items-center gap-1.5 rounded-control border border-border bg-surface px-2.5 text-[11px] font-semibold hover:bg-surface-raised">
+                <Upload :size="13" aria-hidden="true" /> Reimportar
+              </NuxtLink>
+            </div>
           </div>
-          <div class="grid min-h-[245px] place-items-center py-8">
-            <UiEmptyState title="Nenhum conteúdo importado ainda" description="Importe o documento técnico do veículo para preencher esta seção e permitir a conferência durante os testes." :icon="FileText">
-              <template #action>
-                <UiTooltip text="A importação de documentos será habilitada na próxima fase.">
-                  <button type="button" disabled aria-disabled="true" class="inline-flex min-h-9 cursor-not-allowed items-center gap-2 rounded-control border border-border bg-surface px-3 text-xs font-semibold text-foreground-subtle opacity-70">
-                    <FileText :size="14" aria-hidden="true" /> Importar Word
-                  </button>
-                </UiTooltip>
+          <div v-if="carregandoSecoes" class="space-y-3 py-6"><UiSkeleton variant="block" /><UiSkeleton variant="block" /></div>
+          <ul v-else-if="itensSecaoAtiva.length" class="divide-y divide-border">
+            <li v-for="item in itensSecaoAtiva" :key="item.id" class="flex flex-wrap items-start justify-between gap-3 py-3">
+              <div class="min-w-0">
+                <p class="break-words text-sm font-semibold">{{ item.nome_completo }}</p>
+                <p v-if="item.nome_pt" class="mt-1 text-xs text-foreground-muted">{{ item.nome_original }} <span aria-hidden="true">/</span> {{ item.nome_pt }}</p>
+                <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px]">
+                  <span v-for="tipo in tiposTeste" :key="tipo" class="inline-flex items-center gap-1" :class="resultadoRecente(item.id, tipo) ? tomResultado(resultadoRecente(item.id, tipo)!) : 'text-foreground-subtle'">
+                    <component :is="resultadoRecente(item.id, tipo) ? iconeResultado(resultadoRecente(item.id, tipo)!) : Clock3" :size="12" aria-hidden="true" />
+                    {{ tipo === 'bancada' ? 'Bancada' : 'Campo' }}:
+                    {{ resultadoRecente(item.id, tipo) ? `${rotuloResultado(resultadoRecente(item.id, tipo)!)} · teste ${resultadoRecente(item.id, tipo)!.numero}` : 'Sem resultado' }}
+                  </span>
+                </div>
+              </div>
+              <span class="shrink-0 text-right text-[10px] text-foreground-subtle"><span class="font-mono">v{{ item.versao }}</span><span class="mt-1 block">{{ formatarData(item.atualizado_em) }}</span></span>
+            </li>
+          </ul>
+          <div v-else class="grid min-h-[245px] place-items-center py-8">
+            <UiEmptyState title="Nenhum item importado ainda" description="Importe o documento técnico para carregar os nomes dos itens desta seção. Falhas ficam fora do escopo desta importação." :icon="FileText">
+              <template v-if="podeGerenciar" #action>
+                <NuxtLink :to="`/importacoes/nova?codigo=${codigo?.id}`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover">
+                  <FileText :size="14" aria-hidden="true" /> Importar Word
+                </NuxtLink>
               </template>
             </UiEmptyState>
           </div>
@@ -269,7 +439,37 @@ onMounted(() => {
             <Activity :size="16" class="text-foreground-subtle" aria-hidden="true" />
           </div>
           <div class="mt-4">
-            <UiEmptyState title="Nenhum teste registrado" description="Os testes deste veículo aparecerão aqui quando o módulo de execução estiver disponível." :icon="ShieldAlert" />
+            <div v-if="carregandoTestes" class="space-y-3"><UiSkeleton v-for="item in 2" :key="item" variant="block" /></div>
+            <UiEmptyState v-else-if="!testesCodigo.length" title="Nenhum teste registrado" description="Inicie o primeiro checklist de bancada ou campo para registrar a validação dos itens." :icon="ShieldAlert">
+              <template v-if="podeIniciarTeste" #action>
+                <NuxtLink :to="`/codigos/${codigo?.id}/testes/novo`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"><Activity :size="14" aria-hidden="true" /> Novo teste</NuxtLink>
+              </template>
+            </UiEmptyState>
+            <ol v-else class="relative space-y-4 border-l border-border pl-4">
+              <li v-for="teste in testesCodigo" :key="teste.id" class="relative">
+                <span class="absolute -left-[21px] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-primary bg-surface" aria-hidden="true" />
+                <NuxtLink :to="`/testes/${teste.id}`" class="block rounded-control p-2 transition-colors hover:bg-surface-raised">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-xs font-semibold">{{ teste.tipo === 'bancada' ? 'Bancada' : 'Campo' }} · nº {{ teste.numero }}</span>
+                    <UiBadge v-if="teste.status === 'em_andamento'" tone="warning"><Clock3 :size="12" aria-hidden="true" /> Em andamento</UiBadge>
+                    <UiBadge v-else-if="teste.status === 'aprovado'" tone="success"><CheckCircle2 :size="12" aria-hidden="true" /> Aprovado</UiBadge>
+                    <UiBadge v-else-if="teste.status === 'reprovado'" tone="danger"><XCircle :size="12" aria-hidden="true" /> Reprovado</UiBadge>
+                    <UiBadge v-else tone="neutral"><MinusCircle :size="12" aria-hidden="true" /> Cancelado</UiBadge>
+                  </div>
+                  <p class="mt-1 text-[10px] text-foreground-muted">{{ formatarData(teste.data_inicio) }} · {{ teste.responsavel_nome }}</p>
+                  <p class="mt-2 text-[10px] text-foreground-subtle">{{ teste.itens_aprovados }}/{{ teste.itens_testados }} testados aprovados · {{ teste.percentual_aprovado }}%</p>
+                </NuxtLink>
+              </li>
+            </ol>
+            <div v-if="comparacoes.length" class="mt-4 rounded-control border border-info/25 bg-info-surface p-3">
+              <p class="inline-flex items-center gap-1.5 text-[10px] font-bold text-info"><Activity :size="13" aria-hidden="true" /> Comparativo bancada × campo</p>
+              <ul class="mt-2 space-y-2">
+                <li v-for="comparacao in comparacoes" :key="comparacao.codigo_item_id" class="text-[10px] leading-4">
+                  <span class="font-semibold">{{ comparacao.nome_snapshot }}</span><br>
+                  <span class="text-foreground-muted">Reprovou na bancada nº {{ comparacao.numero_bancada_reprovado }} e aprovou no campo nº {{ comparacao.numero_campo }}.</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </aside>
       </div>
@@ -310,6 +510,20 @@ onMounted(() => {
         <UiButton variant="secondary" :disabled="removendo" @click="modalExclusao = false">Cancelar</UiButton>
         <UiButton variant="danger" :loading="removendo" @click="excluirCodigo"><template #icon><Trash2 :size="14" aria-hidden="true" /></template>{{ removendo ? 'Excluindo...' : 'Excluir código' }}</UiButton>
       </template>
+
+      <style scoped>
+      .rich-content :deep(table) { width: 100%; border-collapse: collapse; }
+      .rich-content :deep(th), .rich-content :deep(td) { border: 1px solid hsl(var(--border)); padding: 0.55rem 0.7rem; text-align: left; }
+      .rich-content :deep(th) { background: hsl(var(--surface-raised)); font-weight: 700; }
+      .rich-content :deep(tbody tr:nth-child(even)) { background: hsl(var(--surface-raised)); }
+      .rich-content :deep(ul), .rich-content :deep(ol) { margin: 0.65rem 0; padding-left: 1.5rem; }
+      .rich-content :deep(ul) { list-style: disc; }
+      .rich-content :deep(ol) { list-style: decimal; }
+      .rich-content :deep(p) { margin: 0.6rem 0; }
+      .rich-content :deep(code), .rich-content :deep(pre) { border-radius: 0.35rem; background: hsl(var(--surface-raised)); font-family: var(--font-mono); }
+      .rich-content :deep(code) { padding: 0.1rem 0.25rem; }
+      .rich-content :deep(pre) { overflow: auto; padding: 0.75rem; }
+      </style>
     </UiOverlay>
     <UiToast
       v-model="notificacaoSalva"

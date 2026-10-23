@@ -15,7 +15,7 @@ export interface CodigoListItem {
   ultimo_teste: string | null
   ultimo_teste_data: string | null
   ultimo_teste_tipo: 'bancada' | 'campo' | null
-  status_teste: 'em_andamento' | 'aprovado' | 'reprovado' | null
+  status_teste: 'em_andamento' | 'aprovado' | 'reprovado' | 'cancelado' | null
   ocorrencias_abertas: number
 }
 
@@ -97,8 +97,8 @@ const fromCodigos = `
   LEFT JOIN usuarios u ON u.id = c.criado_por
   LEFT JOIN setores s ON s.id = u.setor_id
   LEFT JOIN (
-    SELECT codigo_id, id, tipo, status, data, criado_em,
-      ROW_NUMBER() OVER (PARTITION BY codigo_id ORDER BY data DESC, criado_em DESC, id DESC) AS numero_linha
+    SELECT codigo_id, id, tipo, status, data_inicio, criado_em,
+      ROW_NUMBER() OVER (PARTITION BY codigo_id ORDER BY data_inicio DESC, criado_em DESC, id DESC) AS numero_linha
     FROM testes
   ) lt ON lt.codigo_id = c.id AND lt.numero_linha = 1
 `
@@ -107,7 +107,7 @@ const camposCodigo = `
   c.id, c.codigo, c.marca, c.modelo, c.motor, c.ano, c.observacoes,
   c.criado_em, c.atualizado_em, c.criado_por,
   u.setor_id, s.nome AS setor,
-  lt.status AS status_teste, lt.tipo AS ultimo_teste_tipo, lt.data AS ultimo_teste_data,
+  lt.status AS status_teste, lt.tipo AS ultimo_teste_tipo, lt.data_inicio AS ultimo_teste_data,
   CASE WHEN lt.id IS NULL THEN NULL ELSE lt.tipo || ':' || lt.status END AS ultimo_teste,
   (SELECT COUNT(*) FROM ocorrencias o WHERE o.codigo_id = c.id AND o.status <> 'resolvida') AS ocorrencias_abertas
 `
@@ -286,12 +286,12 @@ export async function obterMetricasPainel(db: D1Database) {
   const [totalResult, bancadaResult, campoResult, falhasResult, distribuicaoResult, recentesResult] = await db.batch([
     db.prepare('SELECT COUNT(*) AS total FROM codigos WHERE excluido_em IS NULL'),
     db.prepare(`SELECT COUNT(*) AS total FROM (
-      SELECT t.codigo_id, t.status, ROW_NUMBER() OVER (PARTITION BY t.codigo_id ORDER BY t.data DESC, t.criado_em DESC, t.id DESC) AS numero_linha
+      SELECT t.codigo_id, t.status, ROW_NUMBER() OVER (PARTITION BY t.codigo_id ORDER BY t.data_inicio DESC, t.criado_em DESC, t.id DESC) AS numero_linha
       FROM testes t JOIN codigos c ON c.id = t.codigo_id
       WHERE c.excluido_em IS NULL AND t.tipo = 'bancada'
     ) WHERE numero_linha = 1 AND status = 'em_andamento'`),
     db.prepare(`SELECT COUNT(*) AS total FROM (
-      SELECT t.codigo_id, t.status, ROW_NUMBER() OVER (PARTITION BY t.codigo_id ORDER BY t.data DESC, t.criado_em DESC, t.id DESC) AS numero_linha
+      SELECT t.codigo_id, t.status, ROW_NUMBER() OVER (PARTITION BY t.codigo_id ORDER BY t.data_inicio DESC, t.criado_em DESC, t.id DESC) AS numero_linha
       FROM testes t JOIN codigos c ON c.id = t.codigo_id
       WHERE c.excluido_em IS NULL AND t.tipo = 'campo'
     ) WHERE numero_linha = 1 AND status = 'em_andamento'`),
@@ -301,7 +301,7 @@ export async function obterMetricasPainel(db: D1Database) {
     db.prepare(`SELECT COALESCE(lt.status, 'sem_teste') AS status, COUNT(*) AS total
       FROM codigos c
       LEFT JOIN (
-        SELECT codigo_id, status, ROW_NUMBER() OVER (PARTITION BY codigo_id ORDER BY data DESC, criado_em DESC, id DESC) AS numero_linha
+        SELECT codigo_id, status, ROW_NUMBER() OVER (PARTITION BY codigo_id ORDER BY data_inicio DESC, criado_em DESC, id DESC) AS numero_linha
         FROM testes
       ) lt ON lt.codigo_id = c.id AND lt.numero_linha = 1
       WHERE c.excluido_em IS NULL

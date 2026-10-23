@@ -9,7 +9,7 @@ import {
   Command,
   ChevronRight,
   CircleDashed,
-  Cpu,
+  CarFront,
   FileText,
   Gauge,
   Inbox,
@@ -40,7 +40,7 @@ const statuses = [
   { label: 'Em teste', tone: 'warning' as const },
   { label: 'Reprovado', tone: 'danger' as const },
   { label: 'Não testado', tone: 'neutral' as const },
-  { label: 'Em análise', tone: 'info' as const },
+  { label: 'Em análise', tone: 'warning' as const },
 ]
 
 const activeTab = ref('Visão geral')
@@ -74,7 +74,7 @@ const records = [
 ]
 
 const globalSearchItems = [
-  { title: 'Códigos de veículos', detail: 'Pesquisar códigos e modelos', icon: Cpu, target: '#components' },
+  { title: 'Códigos de veículos', detail: 'Pesquisar códigos e modelos', icon: CarFront, target: '#components' },
   { title: 'Testes recentes', detail: 'Execuções de bancada e campo', icon: Activity, target: '#patterns' },
   { title: 'Ocorrências', detail: 'Falhas e itens em análise', icon: AlertTriangle, target: '#patterns' },
 ]
@@ -162,14 +162,8 @@ onBeforeUnmount(() => {
   <div class="min-h-screen bg-canvas text-foreground">
     <div class="mx-auto flex min-h-screen max-w-[1600px]">
       <aside class="hidden w-60 shrink-0 border-r border-border bg-surface px-4 py-5 lg:flex lg:flex-col">
-        <NuxtLink to="/login" class="mb-8 flex items-center gap-3 rounded-control px-2 py-1.5" aria-label="ChipTest, voltar ao login">
-          <span class="grid h-9 w-9 place-items-center rounded-control bg-primary text-primary-foreground shadow-sm">
-            <Cpu :size="19" stroke-width="2.2" aria-hidden="true" />
-          </span>
-          <span class="min-w-0">
-            <span class="block text-sm font-bold tracking-tight">ChipTest</span>
-            <span class="block text-[11px] text-foreground-subtle">Design system · v1.0</span>
-          </span>
+        <NuxtLink to="/login" class="mb-8 flex items-center rounded-control px-2 py-1.5" aria-label="ChipTest, voltar ao login">
+          <BrandLogo variant="full" :size="32" />
         </NuxtLink>
 
         <p class="mb-2 px-2 text-[10px] font-bold uppercase tracking-[0.14em] text-foreground-subtle">Biblioteca</p>
@@ -274,7 +268,7 @@ onBeforeUnmount(() => {
                     { name: 'Canvas', token: 'canvas', color: 'bg-canvas', text: 'text-foreground' },
                     { name: 'Superfície', token: 'surface', color: 'bg-surface border border-border', text: 'text-foreground' },
                     { name: 'Grafite', token: 'foreground', color: 'bg-foreground', text: 'text-surface' },
-                    { name: 'Ação elétrica', token: 'primary', color: 'bg-primary', text: 'text-primary-foreground' },
+                    { name: 'Âmbar industrial', token: 'primary', color: 'bg-primary', text: 'text-primary-foreground' },
                     { name: 'Aprovado', token: 'success', color: 'bg-success', text: 'text-surface' },
                     { name: 'Reprovado', token: 'danger', color: 'bg-danger', text: 'text-danger-foreground' },
                     { name: 'Em teste', token: 'warning', color: 'bg-warning', text: 'text-surface' },
@@ -286,6 +280,29 @@ onBeforeUnmount(() => {
                     <p class="truncate text-xs font-semibold">{{ swatch.name }}</p>
                     <p class="mt-0.5 text-[10px] text-foreground-subtle">var(--{{ swatch.token }})</p>
                   </div>
+                </div>
+              </UiCard>
+
+              <UiCard padding="normal" class="xl:col-span-2">
+                <div class="mb-5">
+                  <h3 class="text-sm font-bold">Marca</h3>
+                  <p class="mt-1 text-xs text-foreground-muted">Símbolo C com sonda · uso mínimo do símbolo: 16 px</p>
+                </div>
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div data-theme="dark" class="theme-sample flex min-h-24 flex-col justify-between rounded-card border border-border p-4">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-subtle">Sobre fundo escuro</p>
+                    <BrandLogo variant="full" :size="40" />
+                  </div>
+                  <div data-theme="light" class="theme-sample flex min-h-24 flex-col justify-between rounded-card border border-border p-4">
+                    <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground-subtle">Sobre fundo claro</p>
+                    <BrandLogo variant="full" :size="40" />
+                  </div>
+                </div>
+                <div class="mt-4 flex flex-wrap items-end gap-5 rounded-control border border-border bg-surface-raised p-4">
+                  <div class="flex flex-col items-center gap-2"><BrandLogo variant="symbol" :size="16" /><span class="text-[10px] text-foreground-muted">16 px · mínimo</span></div>
+                  <div class="flex flex-col items-center gap-2"><BrandLogo variant="symbol" :size="24" /><span class="text-[10px] text-foreground-muted">24 px</span></div>
+                  <div class="flex flex-col items-center gap-2"><BrandLogo variant="symbol" :size="32" /><span class="text-[10px] text-foreground-muted">32 px</span></div>
+                  <div class="flex flex-col items-center gap-2"><BrandLogo variant="full" :size="32" /><span class="text-[10px] text-foreground-muted">Assinatura completa</span></div>
                 </div>
               </UiCard>
 
@@ -311,6 +328,11 @@ onBeforeUnmount(() => {
                         <UiBadge tone="success" dot>Aprovado</UiBadge>
                       </div>
                     </div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                      <UiButton variant="primary" size="sm">Ação principal</UiButton>
+                      <UiBadge tone="warning" dot>Em teste</UiBadge>
+                      <UiBadge tone="neutral" dot>Não testado</UiBadge>
+                    </div>
                   </div>
                   <div data-theme="dark" class="theme-sample rounded-card border border-border p-3.5">
                     <div class="mb-3 flex items-center justify-between">
@@ -325,9 +347,14 @@ onBeforeUnmount(() => {
                         <UiBadge tone="success" dot>Aprovado</UiBadge>
                       </div>
                     </div>
+                    <div class="mt-3 flex flex-wrap items-center gap-2">
+                      <UiButton variant="primary" size="sm">Ação principal</UiButton>
+                      <UiBadge tone="warning" dot>Em teste</UiBadge>
+                      <UiBadge tone="neutral" dot>Não testado</UiBadge>
+                    </div>
                   </div>
                 </div>
-                <p class="mt-3 text-[11px] leading-relaxed text-foreground-muted">O tema inicial acompanha o sistema operacional. A escolha manual fica salva neste dispositivo.</p>
+                <p class="mt-3 text-[11px] leading-relaxed text-foreground-muted">Em teste usa teal para não se confundir com a primária âmbar. O tema inicial respeita o sistema operacional e a escolha manual fica salva neste dispositivo.</p>
               </UiCard>
             </div>
 
@@ -425,7 +452,7 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   <div v-for="metric in [
-                    { title: 'Códigos ativos', value: '1.284', delta: '+8,2%', icon: Cpu, tone: 'text-primary' },
+                    { title: 'Códigos ativos', value: '1.284', delta: '+8,2%', icon: CarFront, tone: 'text-primary' },
                     { title: 'Aprovados', value: '942', delta: '+12,4%', icon: CheckCircle2, tone: 'text-success' },
                     { title: 'Em bancada', value: '38', delta: '+3 hoje', icon: Activity, tone: 'text-warning' },
                     { title: 'Ocorrências', value: '06', delta: '−2 semana', icon: AlertTriangle, tone: 'text-danger' },

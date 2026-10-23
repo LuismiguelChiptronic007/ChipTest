@@ -1,18 +1,8 @@
-<script setup lang="ts">
-import { Cpu } from '@lucide/vue'
-</script>
-
 <template>
   <main class="min-h-screen bg-canvas text-foreground lg:grid lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
     <aside class="auth-circuit relative hidden min-h-screen flex-col justify-between overflow-hidden p-10 text-auth-foreground lg:flex xl:p-14">
-      <div class="relative z-10 flex items-center gap-3">
-        <span class="grid h-11 w-11 place-items-center rounded-panel border border-auth-foreground/15 bg-auth-foreground/10 text-auth-accent">
-          <Cpu :size="22" aria-hidden="true" />
-        </span>
-        <div>
-          <p class="text-sm font-bold tracking-tight">ChipTest</p>
-          <p class="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-auth-muted">Chiptronic</p>
-        </div>
+      <div class="relative z-10">
+        <BrandLogo variant="full" tone="inverse" :size="44" />
       </div>
 
       <div class="relative z-10 max-w-xl">
@@ -36,13 +26,7 @@ import { Cpu } from '@lucide/vue'
       </div>
       <div class="w-full max-w-md">
         <div class="mb-9 lg:hidden">
-          <div class="flex items-center gap-3">
-            <span class="grid h-10 w-10 place-items-center rounded-card bg-primary text-primary-foreground"><Cpu :size="20" aria-hidden="true" /></span>
-            <div>
-              <p class="font-bold tracking-tight">ChipTest</p>
-              <p class="text-xs text-foreground-muted">Chiptronic</p>
-            </div>
-          </div>
+          <BrandLogo variant="full" :size="40" />
           <p class="mt-4 text-sm text-foreground-muted">Testes de veículos por código</p>
         </div>
         <slot />

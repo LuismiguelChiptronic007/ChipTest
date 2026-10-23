@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRight, Cpu, LogOut, Search, ShieldCheck } from '@lucide/vue'
+import { CarFront, ChevronRight, FileText, LayoutDashboard, LogOut, PanelLeftClose, PanelLeftOpen, Search, ShieldCheck } from '@lucide/vue'
 
 const props = defineProps<{
   title: string
@@ -9,6 +9,7 @@ const props = defineProps<{
 const auth = useAuthStore()
 const route = useRoute()
 const mobileNavigationOpen = ref(false)
+const sidebarCollapsed = ref(false)
 const globalSearchOpen = ref(false)
 const globalSearchQuery = ref('')
 const userMenuOpen = ref(false)
@@ -25,8 +26,9 @@ const initials = computed(() => {
 
 const searchItems = computed(() => {
   const items = [
-    { label: 'Visão geral', detail: 'Painel ChipTest', to: '/painel', icon: Cpu },
-    { label: 'Códigos de veículos', detail: 'Catálogo e cadastro de veículos', to: '/codigos', icon: Cpu },
+    { label: 'Visão geral', detail: 'Painel ChipTest', to: '/painel', icon: LayoutDashboard },
+    { label: 'Códigos de veículos', detail: 'Catálogo e cadastro de veículos', to: '/codigos', icon: CarFront },
+    { label: 'Importações', detail: 'Documentos Word e histórico de importações', to: '/importacoes', icon: FileText },
     { label: 'Meu perfil', detail: 'Dados da conta e senha', to: '/perfil', icon: ShieldCheck },
   ]
   if (auth.perfil?.papel === 'admin' && auth.perfil.ativo) {
@@ -94,23 +96,31 @@ onBeforeUnmount(() => {
 <template>
   <div class="min-h-screen bg-canvas text-foreground">
     <div class="flex min-h-screen">
-      <aside class="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-border bg-surface px-3 py-5 lg:flex">
-        <NuxtLink to="/painel" class="mb-8 flex items-center gap-3 px-2" aria-label="ChipTest, ir ao painel">
-          <span class="grid h-10 w-10 place-items-center rounded-card bg-primary text-primary-foreground shadow-sm"><Cpu :size="20" aria-hidden="true" /></span>
-          <span class="min-w-0">
-            <span class="block text-sm font-bold tracking-tight">ChipTest</span>
-            <span class="mt-0.5 block text-[10px] font-medium uppercase tracking-[0.14em] text-foreground-subtle">Chiptronic</span>
-          </span>
-        </NuxtLink>
+      <aside class="interactive no-print sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-surface px-3 py-5 transition-[width] duration-interface lg:flex" :class="sidebarCollapsed ? 'w-[76px]' : 'w-64'">
+        <div class="mb-8 flex items-center justify-between gap-2" :class="{ 'flex-col': sidebarCollapsed }">
+          <NuxtLink to="/painel" class="flex min-h-10 items-center px-1" aria-label="ChipTest, ir ao painel">
+            <BrandLogo :variant="sidebarCollapsed ? 'symbol' : 'full'" :size="sidebarCollapsed ? 32 : 38" />
+          </NuxtLink>
+          <button
+            type="button"
+            class="interactive grid h-8 w-8 shrink-0 place-items-center rounded-control text-foreground-subtle hover:bg-surface-raised hover:text-foreground"
+            :aria-label="sidebarCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'"
+            :aria-expanded="!sidebarCollapsed"
+            @click="sidebarCollapsed = !sidebarCollapsed"
+          >
+            <PanelLeftOpen v-if="sidebarCollapsed" :size="16" aria-hidden="true" />
+            <PanelLeftClose v-else :size="16" aria-hidden="true" />
+          </button>
+        </div>
 
         <div class="min-h-0 flex-1 overflow-y-auto px-1">
-          <AppNavigation />
+          <AppNavigation :collapsed="sidebarCollapsed" />
         </div>
 
         <div class="mt-4 border-t border-border pt-4">
-          <div class="flex items-center gap-3 rounded-card bg-surface-raised p-3">
+          <div class="flex items-center gap-3 rounded-card bg-surface-raised p-3" :class="{ 'flex-col px-1': sidebarCollapsed }">
             <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-info-surface text-xs font-bold text-info">{{ initials }}</span>
-            <span class="min-w-0 flex-1">
+            <span v-if="!sidebarCollapsed" class="min-w-0 flex-1">
               <span class="block truncate text-xs font-semibold">{{ auth.perfil?.nome }}</span>
               <span class="mt-0.5 block truncate text-[10px] text-foreground-muted">{{ auth.perfil?.setor }}</span>
             </span>
@@ -122,7 +132,7 @@ onBeforeUnmount(() => {
       </aside>
 
       <main class="min-w-0 flex-1">
-        <header class="sticky top-0 z-20 border-b border-border bg-canvas/90 backdrop-blur-xl">
+        <header class="no-print sticky top-0 z-20 border-b border-border bg-canvas/90 backdrop-blur-xl">
           <div class="mx-auto flex h-16 max-w-[1440px] items-center gap-3 px-4 sm:px-6 lg:px-8">
             <button
               type="button"
@@ -184,6 +194,7 @@ onBeforeUnmount(() => {
         </header>
 
         <div class="mx-auto w-full max-w-[1440px] px-4 py-7 sm:px-6 sm:py-9 lg:px-8">
+          <div class="print-brand"><img src="/brand/chiptest-horizontal-claro.svg" alt="ChipTest by Chiptronic"></div>
           <div class="mb-7 flex flex-wrap items-end justify-between gap-4">
             <div class="min-w-0">
               <h1 class="text-2xl font-bold tracking-[-0.035em] sm:text-[28px]">{{ props.title }}</h1>
@@ -206,6 +217,7 @@ onBeforeUnmount(() => {
       description="Acesse os módulos disponíveis."
       variant="drawer"
     >
+      <div class="mb-4 border-b border-border pb-4"><BrandLogo variant="full" :size="38" /></div>
       <div class="mt-2 max-h-[calc(100vh-12rem)] overflow-y-auto"><AppNavigation @navigate="mobileNavigationOpen = false" /></div>
     </UiOverlay>
 

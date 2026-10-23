@@ -19,7 +19,7 @@ withDefaults(defineProps<{
       'bg-info-surface text-info': tone === 'info',
     }"
   >
-    <span v-if="dot" class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true" />
+    <span v-if="dot" class="h-1.5 w-1.5 rounded-full" :class="tone === 'neutral' ? 'bg-neutral-mark' : 'bg-current'" aria-hidden="true" />
     <slot />
   </span>
 </template>

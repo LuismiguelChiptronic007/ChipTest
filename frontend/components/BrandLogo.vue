@@ -1,19 +1,22 @@
 <script setup lang="ts">
-/**
- * Logo do ChipTest (C com sonda).
- * - variant="symbol": só o símbolo
- * - variant="full": símbolo + "ChipTest / CHIPTRONIC"
- * O símbolo usa a cor primária do tema; o texto usa as cores de texto do tema.
- * Ajuste os nomes das variáveis CSS abaixo para os tokens do seu design system.
- */
-withDefaults(defineProps<{ variant?: 'symbol' | 'full'; size?: number }>(), {
+withDefaults(defineProps<{ variant?: 'symbol' | 'full'; size?: number; tone?: 'default' | 'inverse' }>(), {
   variant: 'full',
   size: 32,
+  tone: 'default',
 })
 </script>
 
 <template>
-  <span class="brand" :style="{ '--s': size + 'px' }" aria-label="ChipTest">
+  <span
+    class="brand"
+    :style="{
+      '--s': size + 'px',
+      '--color-primary': 'hsl(var(--primary))',
+      '--color-text': tone === 'inverse' ? 'hsl(var(--auth-foreground))' : 'hsl(var(--foreground))',
+      '--color-text-muted': tone === 'inverse' ? 'hsl(var(--auth-muted))' : 'hsl(var(--foreground-muted))',
+    }"
+    aria-label="ChipTest"
+  >
     <svg class="brand__mark" viewBox="0 0 64 64" aria-hidden="true">
       <g fill="none" stroke="currentColor" stroke-linecap="round">
         <path d="M47.6 16.4 A22 22 0 1 0 47.6 47.6" stroke-width="6" />
@@ -33,7 +36,7 @@ withDefaults(defineProps<{ variant?: 'symbol' | 'full'; size?: number }>(), {
   display: inline-flex;
   align-items: center;
   gap: calc(var(--s) * 0.3);
-  color: var(--color-primary, #f5a524);
+  color: var(--color-primary);
 }
 .brand__mark {
   width: var(--s);
@@ -49,12 +52,12 @@ withDefaults(defineProps<{ variant?: 'symbol' | 'full'; size?: number }>(), {
   font-size: calc(var(--s) * 0.5);
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--color-text, #f5f1ea);
+  color: var(--color-text);
 }
 .brand__by {
   font-size: calc(var(--s) * 0.19);
   font-weight: 500;
   letter-spacing: 0.22em;
-  color: var(--color-text-muted, #a39a8c);
+  color: var(--color-text-muted);
 }
 </style>

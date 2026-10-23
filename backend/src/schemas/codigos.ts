@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const statusTesteFiltro = ['todos', 'sem_teste', 'em_andamento', 'aprovado', 'reprovado'] as const
+export const statusTesteFiltro = ['todos', 'sem_teste', 'em_andamento', 'aprovado', 'reprovado', 'cancelado'] as const
 export const ordenacoesCodigos = ['criado_em', 'codigo', 'marca', 'modelo', 'ano', 'ultimo_teste'] as const
 
 const codigoTexto = z.string().trim().min(1, 'Este campo é obrigatório.').max(80, 'O texto deve ter no máximo 80 caracteres.')

@@ -14,135 +14,115 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --canvas: 216 33% 97%;
-  --surface: 0 0% 100%;
-  --surface-raised: 210 40% 98%;
-  --surface-muted: 215 27% 94%;
-  --foreground: 222 36% 13%;
-  --foreground-muted: 218 14% 40%;
-  --foreground-subtle: 218 12% 43%;
-  --border: 215 20% 87%;
-  --border-strong: 215 18% 77%;
-  --primary: 215 91% 48%;
-  --primary-hover: 216 91% 40%;
-  --primary-foreground: 0 0% 100%;
-  --focus-ring: 213 94% 68%;
-  --success: 153 62% 30%;
-  --success-surface: 145 55% 93%;
-  --danger: 0 68% 43%;
-  --danger-surface: 0 72% 95%;
-  --danger-foreground: 0 0% 100%;
-  --warning: 31 90% 34%;
-  --warning-surface: 38 92% 93%;
-  --neutral: 218 12% 43%;
-  --neutral-surface: 215 24% 93%;
-  --info: 215 91% 40%;
-  --info-surface: 214 95% 94%;
-  --shadow-card: 222 40% 12% / 0.055;
-  --shadow-popover: 222 40% 12% / 0.14;
+  color-scheme: dark;
+  --canvas: 36 14.29% 6.86%;
+  --surface: 37.5 17.39% 9.02%;
+  --surface-raised: 38.18 19.3% 11.18%;
+  --surface-muted: 36.77 21.68% 18%;
+  --foreground: 38.18 35.48% 93.92%;
+  --foreground-muted: 36.52 11.11% 59.41%;
+  --foreground-subtle: 36.77 21.68% 71.96%;
+  --border: 37.5 8.89% 17.65%;
+  --border-strong: 37.5 6.45% 24.31%;
+  --primary: 37.03 91.27% 55.1%;
+  --primary-hover: 38.35 100% 61.96%;
+  --primary-text: 37.03 91.27% 55.1%;
+  --primary-hover-text: 38.35 100% 61.96%;
+  --primary-foreground: 38.18 68.75% 6.27%;
+  --focus-ring: 37.03 91.27% 55.1%;
+  --success: 158.11 64.37% 51.57%;
+  --success-surface: 150 14.81% 10.59%;
+  --danger: 0 90.6% 70.78%;
+  --danger-surface: 4.29 21.21% 12.94%;
+  --danger-foreground: 38.18 35.48% 93.92%;
+  --warning: 172.46 66.01% 50.39%;
+  --warning-surface: 168 27.27% 10.78%;
+  --neutral: 36.52 11.11% 59.41%;
+  --neutral-mark: 36.67 7.14% 50.59%;
+  --neutral-surface: 36.77 21.68% 18%;
+  --info: 37.03 91.27% 55.1%;
+  --info-surface: 37.06 40.48% 16.47%;
+  --shadow-card: 0 0% 0% / 0.24;
+  --shadow-popover: 0 0% 0% / 0.5;
   --font-interface: 'Inter Variable', Inter, ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-  --auth-bg: 222 35% 9%;
-  --auth-foreground: 210 25% 96%;
-  --auth-muted: 215 15% 72%;
-  --auth-accent: 199 92% 68%;
-  --auth-grid: 210 70% 80% / 0.045;
-  --auth-glow: 215 91% 48% / 0.13;
+  --auth-bg: 37.5 17.39% 9.02%;
+  --auth-foreground: 38.18 35.48% 93.92%;
+  --auth-muted: 36.52 11.11% 59.41%;
+  --auth-accent: 37.03 91.27% 55.1%;
+  --auth-grid: 36.77 21.68% 71.96% / 0.045;
+  --auth-glow: 37.03 91.27% 55.1% / 0.13;
   --radius-control: 0.5rem;
   --radius-card: 0.75rem;
   --radius-panel: 1rem;
+  --print-canvas: 0 0% 100%;
+  --print-foreground: 24 9.8% 10%;
 }
 
 [data-theme='dark'] {
   color-scheme: dark;
-  --canvas: 222 32% 8%;
-  --surface: 222 28% 11%;
-  --surface-raised: 221 24% 14%;
-  --surface-muted: 220 20% 17%;
-  --foreground: 210 25% 95%;
-  --foreground-muted: 215 14% 76%;
-  --foreground-subtle: 215 12% 64%;
-  --border: 218 17% 23%;
-  --border-strong: 218 15% 31%;
-  --primary: 211 100% 69%;
-  --primary-hover: 210 100% 76%;
-  --primary-foreground: 222 44% 11%;
-  --focus-ring: 211 100% 72%;
-  --success: 150 59% 68%;
-  --success-surface: 153 31% 17%;
-  --danger: 0 83% 76%;
-  --danger-surface: 0 37% 19%;
-  --danger-foreground: 222 44% 11%;
-  --warning: 40 91% 72%;
-  --warning-surface: 34 42% 19%;
-  --neutral: 215 15% 76%;
-  --neutral-surface: 219 18% 20%;
-  --info: 211 100% 76%;
-  --info-surface: 216 37% 19%;
-  --shadow-card: 220 60% 2% / 0.28;
-  --shadow-popover: 220 60% 2% / 0.5;
+  --canvas: 36 14.29% 6.86%;
+  --surface: 37.5 17.39% 9.02%;
+  --surface-raised: 38.18 19.3% 11.18%;
+  --surface-muted: 36.77 21.68% 18%;
+  --foreground: 38.18 35.48% 93.92%;
+  --foreground-muted: 36.52 11.11% 59.41%;
+  --foreground-subtle: 36.77 21.68% 71.96%;
+  --border: 37.5 8.89% 17.65%;
+  --border-strong: 37.5 6.45% 24.31%;
+  --primary: 37.03 91.27% 55.1%;
+  --primary-hover: 38.35 100% 61.96%;
+  --primary-text: 37.03 91.27% 55.1%;
+  --primary-hover-text: 38.35 100% 61.96%;
+  --primary-foreground: 38.18 68.75% 6.27%;
+  --focus-ring: 37.03 91.27% 55.1%;
+  --success: 158.11 64.37% 51.57%;
+  --success-surface: 150 14.81% 10.59%;
+  --danger: 0 90.6% 70.78%;
+  --danger-surface: 4.29 21.21% 12.94%;
+  --danger-foreground: 38.18 35.48% 93.92%;
+  --warning: 172.46 66.01% 50.39%;
+  --warning-surface: 168 27.27% 10.78%;
+  --neutral: 36.52 11.11% 59.41%;
+  --neutral-mark: 36.67 7.14% 50.59%;
+  --neutral-surface: 36.77 21.68% 18%;
+  --info: 37.03 91.27% 55.1%;
+  --info-surface: 37.06 40.48% 16.47%;
+  --shadow-card: 0 0% 0% / 0.24;
+  --shadow-popover: 0 0% 0% / 0.5;
 }
 
 [data-theme='light'] {
   color-scheme: light;
-  --canvas: 216 33% 97%;
+  --canvas: 40 37.5% 96.86%;
   --surface: 0 0% 100%;
-  --surface-raised: 210 40% 98%;
-  --surface-muted: 215 27% 94%;
-  --foreground: 222 36% 13%;
-  --foreground-muted: 218 14% 40%;
-  --foreground-subtle: 218 12% 43%;
-  --border: 215 20% 87%;
-  --border-strong: 215 18% 77%;
-  --primary: 215 91% 48%;
-  --primary-hover: 216 91% 40%;
-  --primary-foreground: 0 0% 100%;
-  --focus-ring: 213 94% 68%;
-  --success: 153 62% 30%;
-  --success-surface: 145 55% 93%;
-  --danger: 0 68% 43%;
-  --danger-surface: 0 72% 95%;
+  --surface-raised: 40 37.5% 96.86%;
+  --surface-muted: 40 28.57% 91.76%;
+  --foreground: 24 9.8% 10%;
+  --foreground-muted: 25 5.26% 44.71%;
+  --foreground-subtle: 36.77 21.68% 38%;
+  --border: 0 1.82% 89.22%;
+  --border-strong: 0 1.1% 82.16%;
+  --primary: 36.99 90.35% 44.71%;
+  --primary-hover: 37.42 93% 39.22%;
+  --primary-text: 38.06 91.78% 28.63%;
+  --primary-hover-text: 38.06 91.78% 28.63%;
+  --primary-foreground: 38.18 68.75% 6.27%;
+  --focus-ring: 36.99 90.35% 44.71%;
+  --success: 142.43 71.81% 29.22%;
+  --success-surface: 151.76 51.52% 93.53%;
+  --danger: 0 73.71% 41.76%;
+  --danger-surface: 5.71 77.78% 94.71%;
   --danger-foreground: 0 0% 100%;
-  --warning: 31 90% 34%;
-  --warning-surface: 38 92% 93%;
-  --neutral: 218 12% 43%;
-  --neutral-surface: 215 24% 93%;
-  --info: 215 91% 40%;
-  --info-surface: 214 95% 94%;
-  --shadow-card: 222 40% 12% / 0.055;
-  --shadow-popover: 222 40% 12% / 0.14;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    color-scheme: dark;
-    --canvas: 222 32% 8%;
-    --surface: 222 28% 11%;
-    --surface-raised: 221 24% 14%;
-    --surface-muted: 220 20% 17%;
-    --foreground: 210 25% 95%;
-    --foreground-muted: 215 14% 76%;
-    --foreground-subtle: 215 12% 64%;
-    --border: 218 17% 23%;
-    --border-strong: 218 15% 31%;
-    --primary: 211 100% 69%;
-    --primary-hover: 210 100% 76%;
-    --primary-foreground: 222 44% 11%;
-    --focus-ring: 211 100% 72%;
-    --success: 150 59% 68%;
-    --success-surface: 153 31% 17%;
-    --danger: 0 83% 76%;
-    --danger-surface: 0 37% 19%;
-    --warning: 40 91% 72%;
-    --warning-surface: 34 42% 19%;
-    --neutral: 215 15% 76%;
-    --neutral-surface: 219 18% 20%;
-    --info: 211 100% 76%;
-    --info-surface: 216 37% 19%;
-    --shadow-card: 220 60% 2% / 0.28;
-    --shadow-popover: 220 60% 2% / 0.5;
-  }
+  --warning: 175.34 77.44% 26.08%;
+  --warning-surface: 165.52 59.18% 90.39%;
+  --neutral: 30 9.18% 38.43%;
+  --neutral-mark: 36.67 7.14% 50.59%;
+  --neutral-surface: 40 28.57% 91.76%;
+  --info: 38.06 91.78% 28.63%;
+  --info-surface: 38 62.5% 90.59%;
+  --shadow-card: 24 9.8% 10% / 0.055;
+  --shadow-popover: 24 9.8% 10% / 0.14;
 }
 
 html {
@@ -167,8 +147,16 @@ body {
 }
 
 :focus-visible {
-  outline: 3px solid hsl(var(--focus-ring) / 0.72);
+  outline: 2px solid hsl(var(--focus-ring));
   outline-offset: 2px;
+}
+
+[data-theme='light'] .text-primary {
+  color: hsl(var(--primary-text) / var(--tw-text-opacity, 1));
+}
+
+[data-theme='light'] .hover\:text-primary-hover:hover {
+  color: hsl(var(--primary-hover-text) / var(--tw-text-opacity, 1));
 }
 
 button,
@@ -230,6 +218,65 @@ textarea {
 
 .interactive {
   transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.print-brand {
+  display: none;
+}
+
+@media print {
+  :root {
+    color-scheme: light;
+    --canvas: 40 37.5% 96.86%;
+    --surface: 0 0% 100%;
+    --surface-raised: 40 37.5% 96.86%;
+    --surface-muted: 40 28.57% 91.76%;
+    --foreground: 24 9.8% 10%;
+    --foreground-muted: 25 5.26% 44.71%;
+    --foreground-subtle: 36.77 21.68% 38%;
+    --border: 0 1.82% 89.22%;
+    --border-strong: 0 1.1% 82.16%;
+    --primary: 36.99 90.35% 44.71%;
+    --primary-hover: 37.42 93% 39.22%;
+    --primary-text: 38.06 91.78% 28.63%;
+    --primary-hover-text: 38.06 91.78% 28.63%;
+    --primary-foreground: 38.18 68.75% 6.27%;
+    --focus-ring: 36.99 90.35% 44.71%;
+    --success: 142.43 71.81% 29.22%;
+    --success-surface: 151.76 51.52% 93.53%;
+    --danger: 0 73.71% 41.76%;
+    --danger-surface: 5.71 77.78% 94.71%;
+    --danger-foreground: 0 0% 100%;
+    --warning: 175.34 77.44% 26.08%;
+    --warning-surface: 165.52 59.18% 90.39%;
+    --neutral: 30 9.18% 38.43%;
+    --neutral-mark: 36.67 7.14% 50.59%;
+    --neutral-surface: 40 28.57% 91.76%;
+    --info: 38.06 91.78% 28.63%;
+    --info-surface: 38 62.5% 90.59%;
+    --shadow-card: 24 9.8% 10% / 0.055;
+    --shadow-popover: 24 9.8% 10% / 0.14;
+  }
+
+  html,
+  body {
+    background: hsl(var(--print-canvas)) !important;
+    color: hsl(var(--print-foreground)) !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-brand {
+    display: block;
+    margin-bottom: 1.5rem;
+  }
+
+  .print-brand img {
+    width: 180px;
+    height: auto;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

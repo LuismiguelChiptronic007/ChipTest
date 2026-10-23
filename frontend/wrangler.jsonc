@@ -16,6 +16,12 @@
       "migrations_dir": "../database/migrations"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "IMPORTS_BUCKET",
+      "bucket_name": "chiptest-importacoes"
+    }
+  ],
   "vars": {
     "APP_URL": "http://localhost:3000",
     "EMAIL_FROM": "ChipTest <onboarding@resend.dev>"

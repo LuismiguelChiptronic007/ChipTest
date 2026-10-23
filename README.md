@@ -104,15 +104,44 @@ O projeto usa Cloudflare D1 (SQLite), não Supabase/PostgreSQL. As rotas Nitro v
 
 Para aplicar todas as migrations no banco local, execute `npm run db:local:migrate` dentro de `frontend/`. O comando `npm run db:remote:migrate` altera o banco remoto e deve ser usado somente quando você decidir publicar as mudanças.
 
+## Importação de documentos Word
+
+A rota `/importacoes/nova` analisa arquivos `.docx` de até 10 MB e importa somente os nomes dos títulos nível 2 (`Heading 2`) sob cada seção nível 1 (`Heading 1`). Os nomes são classificados em “Original” e “Português” pelo separador `/DieselDiag:`. Seções não reconhecidas podem ser atribuídas manualmente; seções relacionadas a falhas são marcadas automaticamente como fora do escopo. Conteúdo normal abaixo dos títulos é ignorado.
+
+Os itens ativos são armazenados em `codigo_itens` no D1. Na reimportação, o sistema compara por seção, nome completo e ocorrência; itens removidos passam para `ativo = 0`, sem apagar o registro. A confirmação registra o resumo (novos, removidos, inalterados e seções ignoradas) e o documento original. A migration `0004_codigo_itens_por_secao.sql` divide os tipos anteriores `sensores_estados` em `sensores` e `estados`, preservando “falhas” para uma importação futura.
+
+Os documentos originais ficam em um bucket R2 privado chamado `chiptest-importacoes`, definido no binding `IMPORTS_BUCKET` de `frontend/wrangler.jsonc`. O R2 local é emulado pelo Wrangler durante o desenvolvimento. Para o ambiente Cloudflare remoto, crie o bucket uma vez e aplique as migrations:
+
+```powershell
+Set-Location frontend
+npx wrangler r2 bucket create chiptest-importacoes --config wrangler.jsonc
+npm run db:remote:migrate
+```
+
+O bucket não é público; downloads passam por uma rota Nitro que exige sessão ativa. Admin e engenharia podem analisar e confirmar importações. Outros perfis ativos podem consultar o histórico e baixar os originais. Como o sistema usa D1, não há RLS do Supabase: as permissões são verificadas nas rotas de servidor.
+
+Para validar o parser e a conversão real do documento de exemplo:
+
+```powershell
+Set-Location frontend
+npm test
+npm run db:local:migrate
+npm run dev
+```
+
+Após entrar com um usuário admin ou de engenharia, abra `/importacoes/nova` e envie [`docs/exemplo-importacao.docx`](./docs/exemplo-importacao.docx). O exemplo contém seções independentes para sensores e estados, títulos nível 2 para os itens e um título de falhas exibido fora do escopo. Reimporte no mesmo código para conferir os itens novos, removidos e inalterados. Itens removidos ficam inativos e podem ser consultados no resumo da importação.
+
+Somente texto de títulos nível 2 é importado. Parágrafos, listas, tabelas, negrito, itálico e outros conteúdos abaixo dos títulos são deliberadamente ignorados; imagens, caixas de texto, formas, SmartArt e elementos flutuantes também não são interpretados como itens.
+
 ## Catálogo e painel
 
-A Fase 3 inclui lista paginada com busca, filtros por marca/status/setor, ordenação, sincronização pela URL, seleção em lote, exportação CSV, alternância tabela/cards e exclusão lógica com histórico. O detalhe do código exibe as sete seções técnicas, o histórico de alterações e os estados vazios de testes/importação. O painel busca métricas, distribuição de status e cadastros recentes diretamente do D1.
+A Fase 3 inclui lista paginada com busca, filtros por marca/status/setor, ordenação, sincronização pela URL, seleção em lote, exportação CSV, alternância tabela/cards e exclusão lógica com histórico. O detalhe do código exibe as seções técnicas, os itens ativos por seção, o histórico de alterações e os estados vazios de testes/importação. O painel busca métricas, distribuição de status e cadastros recentes diretamente do D1.
 
 O filtro por setor considera o setor do usuário que cadastrou o código, pois o modelo atual não possui um setor próprio no registro do veículo.
 
 ### Dados locais de demonstração
 
-Depois de aplicar as migrations localmente, gere 30 códigos fictícios para testar lista e painel:
+Depois de aplicar as migrations localmente, gere 30 códigos fictícios para testar lista, painel e checklist:
 
 ```powershell
 Set-Location frontend
@@ -125,10 +154,31 @@ Os registros usam identificadores e códigos `CT-DEMO-*`, são marcados em `codi
 npm run seed:clear
 ```
 
-O seed é idempotente: executar `npm run seed` novamente restaura/atualiza os mesmos registros de demonstração.
+O seed é idempotente: executar `npm run seed` novamente restaura/atualiza os mesmos registros de demonstração. `CT-DEMO-001` recebe dez itens de checklist distribuídos nos grupos técnicos, inclusive dois itens de sensor com o mesmo nome para testar snapshots independentes.
+
+## Testes por item
+
+A migration `0005_testes_por_item.sql` atualiza o modelo legado sem remover os testes existentes, adiciona os campos de veículo e início/fim, aceita cancelamento e armazena um snapshot por item em `teste_itens`. Itens repetidos permanecem independentes. O checklist é criado em lote a partir dos itens ativos no momento da abertura; reimportações posteriores não alteram execuções existentes.
+
+Com um usuário ativo, abra `/codigos`, selecione `CT-DEMO-001` e use **Novo teste**. Crie uma execução de bancada, marque alguns itens aprovados e um reprovado (preenchendo a observação obrigatória), finalize com status reprovado e depois inicie o primeiro teste de campo. Na execução de campo, aprove o item anteriormente reprovado e finalize. O detalhe do código mostra a linha do tempo, o comparativo bancada/campo e os últimos resultados por item. `/testes` lista execuções em andamento e finalizadas.
+
+O perfil bancada só pode iniciar/editar testes de bancada; campo só pode iniciar/editar testes de campo. Engenharia e admin podem trabalhar nos dois tipos. Todos os perfis ativos podem consultar os testes. Como o banco é Cloudflare D1, não existe RLS: as permissões são verificadas nas rotas Nitro; alterações administrativas em testes finalizados são registradas em `historico_alteracoes`.
+
+Para validar o código localmente:
+
+```powershell
+Set-Location frontend
+npm run db:local:migrate
+npm run seed
+npm test
+npm run typecheck
+npm run build
+```
 
 ## Design system
 
 Abra `/design-system` para visualizar os tokens, componentes de interface, estados e prévias dos temas claro e escuro. A interface usa Inter, JetBrains Mono e ícones Lucide; as cores semânticas e neutras estão centralizadas em `frontend/assets/css/main.css` e expostas como tokens Tailwind.
 
-As telas de autenticação compartilham o layout responsivo `AuthLayout`. As áreas autenticadas usam `AppShell`, com navegação adaptável, alternância de tema, busca global pelo atalho `Ctrl+K` e menu da conta. O painel apresenta dados reais do catálogo D1. Testes, ocorrências e importações serão entregues nas próximas fases.
+O tema padrão é Âmbar industrial escuro, com preferência inicial sincronizada ao sistema operacional. A marca oficial fica em `frontend/components/BrandLogo.vue` e `frontend/public/brand/`; a assinatura clara é usada em fundo claro, e a escura em superfícies escuras. O favicon está em `frontend/public/favicon.svg`. E-mails de redefinição e páginas impressas usam a assinatura apropriada para fundo claro.
+
+As telas de autenticação compartilham o layout responsivo `AuthLayout`. As áreas autenticadas usam `AppShell`, com navegação adaptável, alternância de tema, busca global pelo atalho `Ctrl+K` e menu da conta. O painel apresenta dados reais do catálogo e dos testes D1. A integração de abertura de ocorrências a partir de um item reprovado será concluída na Fase 6.

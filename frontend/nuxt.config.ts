@@ -31,9 +31,12 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'pt-BR' },
-      title: 'ChipTest | Chiptronic',
+      title: 'ChipTest',
       meta: [
         { name: 'description', content: 'Gestão de códigos e testes veiculares da Chiptronic.' },
+      ],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
       ],
     },
   },

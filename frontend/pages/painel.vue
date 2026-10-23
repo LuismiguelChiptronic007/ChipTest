@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { Activity, AlertTriangle, ArrowRight, CheckCircle2, Cpu, Plus, RefreshCw } from '@lucide/vue'
+import { Activity, AlertTriangle, ArrowRight, Ban, CarFront, CheckCircle2, CircleDashed, Clock3, Plus, RefreshCw, XCircle } from '@lucide/vue'
 import { z } from 'zod'
 import type { CodigoListItem } from '@backend/services/codigos'
 
-type StatusPainel = 'sem_teste' | 'em_andamento' | 'aprovado' | 'reprovado'
+type StatusPainel = 'sem_teste' | 'em_andamento' | 'aprovado' | 'reprovado' | 'cancelado'
 
 interface DadosPainel {
   metricas: { total_codigos: number; em_bancada: number; em_campo: number; com_falhas: number }
@@ -25,7 +25,7 @@ const painelSchema = z.object({
     com_falhas: z.number().int().nonnegative(),
   }),
   distribuicao: z.array(z.object({
-    status: z.enum(['sem_teste', 'em_andamento', 'aprovado', 'reprovado']),
+    status: z.enum(['sem_teste', 'em_andamento', 'aprovado', 'reprovado', 'cancelado']),
     total: z.number().int().nonnegative(),
   })),
   codigos_por_mes: z.array(z.object({
@@ -47,13 +47,13 @@ const painelSchema = z.object({
     ultimo_teste: z.string().nullable(),
     ultimo_teste_data: z.string().nullable(),
     ultimo_teste_tipo: z.enum(['bancada', 'campo']).nullable(),
-    status_teste: z.enum(['em_andamento', 'aprovado', 'reprovado']).nullable(),
+    status_teste: z.enum(['em_andamento', 'aprovado', 'reprovado', 'cancelado']).nullable(),
     ocorrencias_abertas: z.number().int().nonnegative(),
   })),
 })
 
 const indicadores = computed(() => [
-  { titulo: 'Códigos cadastrados', valor: dados.value?.metricas.total_codigos ?? 0, detalhe: 'Veículos ativos no catálogo', icon: Cpu, tone: 'primary' as const },
+  { titulo: 'Códigos cadastrados', valor: dados.value?.metricas.total_codigos ?? 0, detalhe: 'Veículos ativos no catálogo', icon: CarFront, tone: 'primary' as const },
   { titulo: 'Em bancada', valor: dados.value?.metricas.em_bancada ?? 0, detalhe: 'Último teste de bancada em andamento', icon: Activity, tone: 'warning' as const },
   { titulo: 'Em campo', valor: dados.value?.metricas.em_campo ?? 0, detalhe: 'Último teste de campo em andamento', icon: Activity, tone: 'warning' as const },
   { titulo: 'Com falhas abertas', valor: dados.value?.metricas.com_falhas ?? 0, detalhe: 'Veículos com ocorrências não resolvidas', icon: AlertTriangle, tone: 'danger' as const },
@@ -66,6 +66,7 @@ const partesRosca = computed(() => {
     reprovado: 'hsl(var(--danger))',
     em_andamento: 'hsl(var(--warning))',
     sem_teste: 'hsl(var(--neutral))',
+    cancelado: 'hsl(var(--neutral-mark))',
   }
   let inicio = 0
   const trechos = (dados.value?.distribuicao ?? []).map((item: DadosPainel['distribuicao'][number]) => {
@@ -82,12 +83,21 @@ const nomesStatus: Record<string, string> = {
   em_andamento: 'Em andamento',
   aprovado: 'Aprovados',
   reprovado: 'Reprovados',
+  cancelado: 'Cancelados',
 }
-const tonsStatus: Record<string, 'neutral' | 'warning' | 'success' | 'danger'> = {
+const tonsStatus: Record<StatusPainel, 'neutral' | 'warning' | 'success' | 'danger'> = {
   sem_teste: 'neutral',
   em_andamento: 'warning',
   aprovado: 'success',
   reprovado: 'danger',
+  cancelado: 'neutral',
+}
+const iconesStatus = {
+  sem_teste: CircleDashed,
+  em_andamento: Clock3,
+  aprovado: CheckCircle2,
+  reprovado: XCircle,
+  cancelado: Ban,
 }
 
 function formatarMes(periodo: string) {
@@ -124,7 +134,7 @@ onMounted(() => void carregarPainel())
   <AppShell title="Visão geral" description="Acompanhe o catálogo e a atividade de validação dos veículos.">
     <template #actions>
       <NuxtLink to="/codigos" class="interactive inline-flex min-h-10 items-center gap-2 rounded-control border border-border bg-surface px-3.5 text-xs font-semibold text-foreground hover:bg-surface-raised sm:text-sm">
-        <Cpu :size="15" aria-hidden="true" /> Ver códigos
+        <CarFront :size="15" aria-hidden="true" /> Ver códigos
       </NuxtLink>
       <NuxtLink v-if="auth.papel === 'admin' || auth.papel === 'engenharia'" to="/codigos/novo" class="interactive inline-flex min-h-10 items-center gap-2 rounded-control bg-primary px-3.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover sm:text-sm">
         <Plus :size="15" aria-hidden="true" /> Novo código
@@ -221,7 +231,7 @@ onMounted(() => void carregarPainel())
           </div>
           <ul class="min-w-[140px] flex-1 space-y-2.5">
             <li v-for="item in dados.distribuicao" :key="item.status" class="flex items-center justify-between gap-3">
-              <span class="flex items-center gap-2"><UiBadge :tone="tonsStatus[item.status]" dot>{{ nomesStatus[item.status] }}</UiBadge></span>
+              <span class="flex items-center gap-2"><UiBadge :tone="tonsStatus[item.status as StatusPainel]"><component :is="iconesStatus[item.status as StatusPainel]" :size="13" aria-hidden="true" />{{ nomesStatus[item.status] }}</UiBadge></span>
               <span class="font-mono text-xs font-semibold">{{ item.total }}</span>
             </li>
             <li v-if="!dados.distribuicao.length" class="text-xs text-foreground-muted">Nenhum código cadastrado.</li>
@@ -252,7 +262,7 @@ onMounted(() => void carregarPainel())
           </li>
         </ul>
         <div v-else class="mt-4">
-          <UiEmptyState title="Nenhum código cadastrado" description="Adicione o primeiro veículo para começar a acompanhar o catálogo." :icon="Cpu">
+          <UiEmptyState title="Nenhum código cadastrado" description="Adicione o primeiro veículo para começar a acompanhar o catálogo." :icon="CarFront">
             <template v-if="auth.papel === 'admin' || auth.papel === 'engenharia'" #action>
               <NuxtLink to="/codigos/novo" class="text-xs font-semibold text-primary hover:text-primary-hover">Cadastrar primeiro código</NuxtLink>
             </template>
@@ -265,7 +275,7 @@ onMounted(() => void carregarPainel())
         <p class="mt-1 text-xs text-foreground-muted">Atalhos para as tarefas mais comuns</p>
         <div class="mt-4 space-y-2">
           <NuxtLink to="/codigos" class="interactive flex min-h-12 items-center justify-between gap-3 rounded-control border border-border bg-surface px-3.5 text-xs font-semibold hover:bg-surface-raised">
-            <span class="flex items-center gap-2.5"><Cpu :size="16" class="text-info" aria-hidden="true" /> Consultar códigos</span><ArrowRight :size="14" class="text-foreground-subtle" aria-hidden="true" />
+            <span class="flex items-center gap-2.5"><CarFront :size="16" class="text-info" aria-hidden="true" /> Consultar códigos</span><ArrowRight :size="14" class="text-foreground-subtle" aria-hidden="true" />
           </NuxtLink>
           <NuxtLink v-if="auth.papel === 'admin' || auth.papel === 'engenharia'" to="/codigos/novo" class="interactive flex min-h-12 items-center justify-between gap-3 rounded-control border border-border bg-surface px-3.5 text-xs font-semibold hover:bg-surface-raised">
             <span class="flex items-center gap-2.5"><Plus :size="16" class="text-info" aria-hidden="true" /> Cadastrar veículo</span><ArrowRight :size="14" class="text-foreground-subtle" aria-hidden="true" />

@@ -55,6 +55,8 @@ const statements = clearOnly
   ? [
       `UPDATE codigos SET excluido_em = COALESCE(excluido_em, datetime('now')), atualizado_em = datetime('now')
        WHERE id IN (SELECT codigo_id FROM codigos_demo_seed)`,
+      `UPDATE codigo_itens SET ativo = 0
+       WHERE codigo_id IN (SELECT codigo_id FROM codigos_demo_seed)`,
     ]
   : vehicles.flatMap(([marca, modelo, motor, ano], index) => {
       const number = index + 1
@@ -73,6 +75,32 @@ const statements = clearOnly
       ]
     })
 
+if (!clearOnly) {
+  const seededCodeId = uuid(1)
+  const sampleItems = [
+    ['dados_central', 'Identificação da central /DieselDiag:ECU', 'Identificação da central', 'ECU', 1],
+    ['dados_central', 'Número de identificação do veículo /DieselDiag:VIN', 'Número de identificação do veículo', 'VIN', 2],
+    ['sensores', 'Rotação do motor /DieselDiag:RPM', 'Rotação do motor', 'RPM', 3],
+    ['sensores', 'Temperatura do líquido de arrefecimento /DieselDiag:ECT', 'Temperatura do líquido de arrefecimento', 'ECT', 4],
+    ['estados', 'Ignição /DieselDiag:Ignition', 'Ignição', 'Ignition', 5],
+    ['atuadores', 'Acionamento da ventoinha /DieselDiag:Fan', 'Acionamento da ventoinha', 'Fan', 6],
+    ['ajuste', 'Ajuste de marcha lenta /DieselDiag:Idle', 'Ajuste de marcha lenta', 'Idle', 7],
+    ['parametrizacao', 'Limite de rotação /DieselDiag:Rev limit', 'Limite de rotação', 'Rev limit', 8],
+    ['funcao_avancada', 'Reaprendizado do corpo de borboleta /DieselDiag:Throttle learn', 'Reaprendizado do corpo de borboleta', 'Throttle learn', 9],
+    ['sensores', 'Rotação do motor /DieselDiag:RPM', 'Rotação do motor', 'RPM', 10],
+  ]
+  statements.push(...sampleItems.map(([tipoSecao, nomeCompleto, nomeOriginal, nomePt, ordem]) => {
+    const itemId = `e5000000-0000-4000-8000-${String(ordem).padStart(12, '0')}`
+    return `INSERT INTO codigo_itens
+      (id, codigo_id, tipo_secao, nome_completo, nome_original, nome_pt, ordem, versao, ativo)
+      VALUES (${sqlLiteral(itemId)}, ${sqlLiteral(seededCodeId)}, ${sqlLiteral(tipoSecao)}, ${sqlLiteral(nomeCompleto)},
+        ${sqlLiteral(nomeOriginal)}, ${sqlLiteral(nomePt)}, ${Number(ordem)}, 1, 1)
+      ON CONFLICT(id) DO UPDATE SET ativo = 1, tipo_secao = excluded.tipo_secao,
+        nome_completo = excluded.nome_completo, nome_original = excluded.nome_original,
+        nome_pt = excluded.nome_pt, ordem = excluded.ordem`
+  }))
+}
+
 await mkdir(temporaryDirectory, { recursive: true })
 try {
   await writeFile(sqlFile, `${statements.join(';\n')};\n`, 'utf8')
@@ -85,7 +113,7 @@ try {
   if (result.status !== 0) process.exit(result.status ?? 1)
   console.log(clearOnly
     ? 'Os registros marcados pelo seed foram ocultados do catálogo local.'
-    : `${vehicles.length} códigos de demonstração foram criados ou atualizados no D1 local.`)
+    : `${vehicles.length} códigos de demonstração e 10 itens de checklist para CT-DEMO-001 foram criados ou atualizados no D1 local.`)
 } finally {
   await rm(sqlFile, { force: true })
 }

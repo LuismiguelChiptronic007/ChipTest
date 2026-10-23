@@ -3,8 +3,11 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpDown,
+  Ban,
+  CheckCircle2,
+  CircleDashed,
   Copy,
-  Cpu,
+  CarFront,
   Download,
   Eye,
   FileUp,
@@ -13,6 +16,8 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Clock3,
+  XCircle,
   X,
 } from '@lucide/vue'
 import type { CodigoListItem } from '@backend/services/codigos'
@@ -38,6 +43,7 @@ const statusOptions = [
   { label: 'Em andamento', value: 'em_andamento' },
   { label: 'Aprovados', value: 'aprovado' },
   { label: 'Reprovados', value: 'reprovado' },
+  { label: 'Cancelados', value: 'cancelado' },
 ]
 const marcaOptions = computed(() => [
   { label: 'Todas as marcas', value: '' },
@@ -63,10 +69,11 @@ const statusExclusaoTexto = computed(() => store.selecionados.length === 1
   : `Os ${store.selecionados.length} códigos selecionados serão ocultados da lista. Os cadastros e históricos permanecerão preservados.`)
 
 function statusDoCodigo(codigo: CodigoListItem) {
-  if (!codigo.status_teste) return { label: 'Sem testes', tone: 'neutral' as const }
-  if (codigo.status_teste === 'aprovado') return { label: 'Aprovado', tone: 'success' as const }
-  if (codigo.status_teste === 'reprovado') return { label: 'Reprovado', tone: 'danger' as const }
-  return { label: 'Em andamento', tone: 'warning' as const }
+  if (!codigo.status_teste) return { label: 'Sem testes', tone: 'neutral' as const, icon: CircleDashed }
+  if (codigo.status_teste === 'aprovado') return { label: 'Aprovado', tone: 'success' as const, icon: CheckCircle2 }
+  if (codigo.status_teste === 'reprovado') return { label: 'Reprovado', tone: 'danger' as const, icon: XCircle }
+  if (codigo.status_teste === 'cancelado') return { label: 'Cancelado', tone: 'neutral' as const, icon: Ban }
+  return { label: 'Em andamento', tone: 'warning' as const, icon: Clock3 }
 }
 
 function nomeTipoTeste(tipo: string | null) {
@@ -253,11 +260,9 @@ onBeforeUnmount(() => {
 <template>
   <AppShell title="Códigos de veículos" description="Pesquise e mantenha organizado o catálogo técnico de veículos da Chiptronic.">
     <template #actions>
-      <UiTooltip text="A importação de documentos estará disponível na próxima fase.">
-        <button type="button" disabled aria-disabled="true" class="inline-flex min-h-10 cursor-not-allowed items-center gap-2 rounded-control border border-border bg-surface px-3 text-xs font-semibold text-foreground-subtle opacity-70">
-          <FileUp :size="15" aria-hidden="true" /> <span class="hidden sm:inline">Importar Word</span><span class="sm:hidden">Importar</span>
-        </button>
-      </UiTooltip>
+      <NuxtLink v-if="gerencia" to="/importacoes/nova" class="interactive inline-flex min-h-10 items-center gap-2 rounded-control border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-raised">
+        <FileUp :size="15" aria-hidden="true" /> <span class="hidden sm:inline">Importar Word</span><span class="sm:hidden">Importar</span>
+      </NuxtLink>
       <NuxtLink v-if="gerencia" to="/codigos/novo" class="interactive inline-flex min-h-10 items-center gap-2 rounded-control bg-primary px-3.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover sm:px-4 sm:text-sm">
         <Plus :size="16" aria-hidden="true" /> Novo código
       </NuxtLink>
@@ -320,7 +325,7 @@ onBeforeUnmount(() => {
         <UiEmptyState
           :title="lista.total.value === 0 && !store.filtros.busca && !store.filtros.marca && !store.filtros.setor && store.filtros.status === 'todos' ? 'Seu catálogo começa aqui' : 'Nenhum código encontrado'"
           :description="lista.total.value === 0 && !store.filtros.busca && !store.filtros.marca && !store.filtros.setor && store.filtros.status === 'todos' ? 'Cadastre o primeiro veículo para organizar informações técnicas e acompanhar os testes.' : 'Tente ajustar a busca ou remover alguns filtros.'"
-          :icon="Cpu"
+          :icon="CarFront"
         >
           <template v-if="gerencia && lista.total.value === 0" #action>
             <NuxtLink to="/codigos/novo" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"><Plus :size="14" aria-hidden="true" /> Cadastrar primeiro código</NuxtLink>
@@ -351,7 +356,7 @@ onBeforeUnmount(() => {
                 <td class="border-b border-border/70 px-4 py-3.5 text-foreground-muted">{{ codigo.motor || '—' }}</td>
                 <td class="border-b border-border/70 px-4 py-3.5 font-mono text-foreground-muted">{{ codigo.ano || '—' }}</td>
                 <td class="border-b border-border/70 px-4 py-3.5"><span class="block font-medium text-foreground-muted">{{ formatarData(codigo.ultimo_teste_data) }}</span><span v-if="codigo.ultimo_teste_tipo" class="mt-0.5 block text-[10px] text-foreground-subtle">{{ nomeTipoTeste(codigo.ultimo_teste_tipo) }}</span></td>
-                <td class="border-b border-border/70 px-4 py-3.5"><div class="flex flex-wrap items-center gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone" dot>{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger">{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div></td>
+                <td class="border-b border-border/70 px-4 py-3.5"><div class="flex flex-wrap items-center gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone"><component :is="statusDoCodigo(codigo).icon" :size="13" aria-hidden="true" />{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger"><XCircle :size="13" aria-hidden="true" />{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div></td>
                 <td class="border-b border-border/70 px-4 py-3.5"><div class="flex justify-end gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
                   <NuxtLink :to="`/codigos/${codigo.id}`" class="grid h-8 w-8 place-items-center rounded-control text-foreground-subtle hover:bg-surface-muted hover:text-foreground" :aria-label="`Ver ${codigo.codigo}`"><Eye :size="15" aria-hidden="true" /></NuxtLink>
                   <NuxtLink v-if="gerencia" :to="`/codigos/${codigo.id}/editar`" class="grid h-8 w-8 place-items-center rounded-control text-foreground-subtle hover:bg-surface-muted hover:text-foreground" :aria-label="`Editar ${codigo.codigo}`"><Pencil :size="14" aria-hidden="true" /></NuxtLink>
@@ -371,7 +376,7 @@ onBeforeUnmount(() => {
             </div>
             <NuxtLink :to="`/codigos/${codigo.id}`" class="mt-2 block text-sm font-semibold">{{ codigo.marca }} {{ codigo.modelo }}</NuxtLink>
             <p class="mt-1 text-xs text-foreground-muted">{{ codigo.motor || 'Motorização não informada' }}<span v-if="codigo.ano"> · {{ codigo.ano }}</span></p>
-            <div class="mt-3 flex flex-wrap gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone" dot>{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger">{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div>
+            <div class="mt-3 flex flex-wrap gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone"><component :is="statusDoCodigo(codigo).icon" :size="13" aria-hidden="true" />{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger"><XCircle :size="13" aria-hidden="true" />{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div>
             <p class="mt-3 text-[10px] text-foreground-subtle">Último teste: {{ formatarData(codigo.ultimo_teste_data) }}</p>
             <div class="mt-3 flex justify-end gap-1 border-t border-border pt-2">
               <NuxtLink :to="`/codigos/${codigo.id}`" class="grid h-8 w-8 place-items-center rounded-control text-foreground-subtle hover:bg-surface-muted" :aria-label="`Ver ${codigo.codigo}`"><Eye :size="15" aria-hidden="true" /></NuxtLink>
@@ -393,7 +398,7 @@ onBeforeUnmount(() => {
             </div>
             <input v-if="podeExcluir" type="checkbox" :checked="store.selecionados.includes(codigo.id)" :disabled="!podeSelecionar(codigo)" :aria-label="`Selecionar ${codigo.codigo}`" class="h-4 w-4 rounded border-border accent-primary disabled:cursor-not-allowed disabled:opacity-40" @change="alternarSelecaoSegura(codigo)">
           </div>
-          <div class="mt-4 flex flex-wrap gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone" dot>{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger">{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div>
+          <div class="mt-4 flex flex-wrap gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone"><component :is="statusDoCodigo(codigo).icon" :size="13" aria-hidden="true" />{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger"><XCircle :size="13" aria-hidden="true" />{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div>
           <div class="mt-4 flex items-center justify-between border-t border-border pt-3 text-[10px] text-foreground-subtle">
             <span>{{ nomeTipoTeste(codigo.ultimo_teste_tipo) || 'Último teste' }} · {{ formatarData(codigo.ultimo_teste_data) }}</span>
             <div class="flex gap-1">

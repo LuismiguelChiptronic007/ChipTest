@@ -31,6 +31,7 @@ export default defineEventHandler(async (event) => {
 
     const url = new URL('/redefinir-senha', env.APP_URL || 'http://localhost:3000')
     url.searchParams.set('token', token)
+    const logoUrl = new URL('/brand/chiptest-horizontal-claro.svg', env.APP_URL || 'http://localhost:3000')
     const resposta = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -41,7 +42,7 @@ export default defineEventHandler(async (event) => {
         from: env.EMAIL_FROM || 'ChipTest <onboarding@resend.dev>',
         to: [usuario.email],
         subject: 'Redefinir sua senha do ChipTest',
-        html: `<p>Recebemos uma solicitação para redefinir sua senha do ChipTest.</p><p><a href="${url.toString()}">Definir nova senha</a></p><p>O link expira em uma hora. Se você não solicitou a redefinição, ignore esta mensagem.</p>`,
+        html: `<p><img src="${logoUrl.toString()}" width="180" alt="ChipTest by Chiptronic"></p><p>Recebemos uma solicitação para redefinir sua senha do ChipTest.</p><p><a href="${url.toString()}">Definir nova senha</a></p><p>O link expira em uma hora. Se você não solicitou a redefinição, ignore esta mensagem.</p>`,
         text: `Acesse ${url.toString()} para definir uma nova senha. O link expira em uma hora.`,
       }),
     })
