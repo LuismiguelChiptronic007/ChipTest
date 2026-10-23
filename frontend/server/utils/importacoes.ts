@@ -154,14 +154,7 @@ export async function confirmarImportacao(
   const itensReordenados = comparacao.reordenados
 
   const importacaoId = crypto.randomUUID()
-  const chaveArquivo = `importacoes/${usuario.id}/${importacaoId}.docx`
   for (const item of novosItens) item.importacao_id = importacaoId
-
-  const bucket = getImportacoesBucket(event)
-  await bucket.put(chaveArquivo, arquivo, {
-    httpMetadata: { contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
-    customMetadata: { importacaoId, codigoId },
-  })
 
   const comandos: D1PreparedStatement[] = []
   if (novoCodigo) {
@@ -179,9 +172,9 @@ export async function confirmarImportacao(
 
   comandos.push(
     db.prepare(
-      `INSERT INTO importacoes (id, codigo_id, nome_arquivo, arquivo_key, usuario_id, resumo, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'concluida')`,
-    ).bind(importacaoId, codigoId, nomeArquivo.slice(0, 255), chaveArquivo, usuario.id, JSON.stringify(resumo)),
+      `INSERT INTO importacoes (id, codigo_id, nome_arquivo, usuario_id, resumo, status)
+       VALUES (?, ?, ?, ?, ?, 'concluida')`,
+    ).bind(importacaoId, codigoId, nomeArquivo.slice(0, 255), usuario.id, JSON.stringify(resumo)),
   )
 
   if (novosItens.length) {
@@ -231,15 +224,6 @@ export async function confirmarImportacao(
   try {
     await db.batch(comandos)
   } catch (error: unknown) {
-    try {
-      await bucket.delete(chaveArquivo)
-    } catch (erroLimpeza: unknown) {
-      console.error('Falha ao limpar o arquivo R2 após erro ao gravar a importação.', erroLimpeza)
-      throw createError({
-        statusCode: 500,
-        statusMessage: 'Não foi possível concluir a importação nem remover o arquivo temporário do armazenamento. Contate o administrador.',
-      })
-    }
     if (error instanceof Error && error.message.includes('UNIQUE constraint failed: codigos.codigo')) {
       throw createError({
         statusCode: 409,

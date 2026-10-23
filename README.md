@@ -108,17 +108,9 @@ Para aplicar todas as migrations no banco local, execute `npm run db:local:migra
 
 A rota `/importacoes/nova` analisa arquivos `.docx` de até 10 MB e importa somente os nomes dos títulos nível 2 (`Heading 2`) sob cada seção nível 1 (`Heading 1`). Os nomes são classificados em “Original” e “Português” pelo separador `/DieselDiag:`. Seções não reconhecidas podem ser atribuídas manualmente; seções relacionadas a falhas são marcadas automaticamente como fora do escopo. Conteúdo normal abaixo dos títulos é ignorado.
 
-Os itens ativos são armazenados em `codigo_itens` no D1. Na reimportação, o sistema compara por seção, nome completo e ocorrência; itens removidos passam para `ativo = 0`, sem apagar o registro. A confirmação registra o resumo (novos, removidos, inalterados e seções ignoradas) e o documento original. A migration `0004_codigo_itens_por_secao.sql` divide os tipos anteriores `sensores_estados` em `sensores` e `estados`, preservando “falhas” para uma importação futura.
+Os itens ativos são armazenados em `codigo_itens` no D1. Na reimportação, o sistema compara por seção, nome completo e ocorrência; itens removidos passam para `ativo = 0`, sem apagar o registro. A confirmação registra o nome do arquivo e o resumo (novos, removidos, inalterados e seções ignoradas), mas **não armazena o DOCX original**. A migration `0004_codigo_itens_por_secao.sql` divide os tipos anteriores `sensores_estados` em `sensores` e `estados`, preservando “falhas” para uma importação futura; `0006_importacoes_sem_arquivo.sql` torna opcional a antiga chave de arquivo.
 
-Os documentos originais ficam em um bucket R2 privado chamado `chiptest-importacoes`, definido no binding `IMPORTS_BUCKET` de `frontend/wrangler.jsonc`. O R2 local é emulado pelo Wrangler durante o desenvolvimento. Para o ambiente Cloudflare remoto, crie o bucket uma vez e aplique as migrations:
-
-```powershell
-Set-Location frontend
-npx wrangler r2 bucket create chiptest-importacoes --config wrangler.jsonc
-npm run db:remote:migrate
-```
-
-O bucket não é público; downloads passam por uma rota Nitro que exige sessão ativa. Admin e engenharia podem analisar e confirmar importações. Outros perfis ativos podem consultar o histórico e baixar os originais. Como o sistema usa D1, não há RLS do Supabase: as permissões são verificadas nas rotas de servidor.
+Admin e engenharia podem analisar e confirmar importações. Outros perfis ativos podem consultar o histórico de metadados e itens importados. Como o sistema usa D1, não há RLS do Supabase: as permissões são verificadas nas rotas de servidor.
 
 Para validar o parser e a conversão real do documento de exemplo:
 

@@ -49,5 +49,10 @@ export default defineNuxtConfig({
   typescript: {
     strict: true,
     typeCheck: true,
+    tsConfig: {
+      compilerOptions: {
+        types: ['@cloudflare/workers-types', 'node'],
+      },
+    },
   },
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Download, FileText, RefreshCw, Upload } from '@lucide/vue'
+import { FileText, RefreshCw, Upload } from '@lucide/vue'
 import { z } from 'zod'
 import { resumoImportacaoSchema } from '@backend/schemas/importacoes'
 
@@ -69,7 +69,7 @@ onMounted(() => void carregar())
 </script>
 
 <template>
-  <AppShell title="Importações" description="Documentos Word originais e histórico dos itens técnicos carregados nos códigos.">
+  <AppShell title="Importações" description="Histórico dos documentos analisados e dos itens técnicos carregados nos códigos.">
     <template #actions>
       <NuxtLink v-if="podeImportar" to="/importacoes/nova" class="interactive inline-flex min-h-10 items-center gap-2 rounded-control bg-primary px-3.5 text-xs font-semibold text-primary-foreground hover:bg-primary-hover sm:px-4 sm:text-sm">
         <Upload :size="15" aria-hidden="true" /> Importar Word
@@ -91,7 +91,7 @@ onMounted(() => void carregar())
         <UiSkeleton v-for="item in 5" :key="item" variant="block" />
       </div>
       <div v-else-if="!erro && !importacoes.length" class="p-6 sm:p-10">
-        <UiEmptyState title="Nenhum documento importado" description="Quando um documento técnico for carregado, ele e o resumo das seções aparecerão nesta lista." :icon="FileText">
+        <UiEmptyState title="Nenhuma importação registrada" description="Quando um documento técnico for analisado e confirmado, seu nome e o resumo das seções aparecerão nesta lista. O arquivo original não é armazenado." :icon="FileText">
           <template v-if="podeImportar" #action>
             <NuxtLink to="/importacoes/nova" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"><Upload :size="14" aria-hidden="true" /> Importar primeiro documento</NuxtLink>
           </template>
@@ -100,7 +100,7 @@ onMounted(() => void carregar())
       <div v-else-if="importacoes.length" class="overflow-x-auto">
         <table class="w-full min-w-[760px] text-left text-xs">
           <thead class="sticky top-0 bg-surface-raised text-[10px] uppercase tracking-wide text-foreground-subtle">
-            <tr><th class="px-4 py-3 font-bold sm:px-5">Data / usuário</th><th class="px-4 py-3 font-bold">Documento</th><th class="px-4 py-3 font-bold">Código</th><th class="px-4 py-3 font-bold">Resumo</th><th class="px-4 py-3 font-bold">Original</th></tr>
+            <tr><th class="px-4 py-3 font-bold sm:px-5">Data / usuário</th><th class="px-4 py-3 font-bold">Documento analisado</th><th class="px-4 py-3 font-bold">Código</th><th class="px-4 py-3 font-bold">Resumo</th></tr>
           </thead>
           <tbody>
             <tr v-for="item in importacoes" :key="item.id" class="border-t border-border hover:bg-surface-raised/60">
@@ -113,17 +113,12 @@ onMounted(() => void carregar())
               <td class="px-4 py-3.5 text-foreground-muted">
                 <template v-if="item.resumo.legado">
                   <p>Importação anterior à lista de itens</p>
-                  <p class="mt-1">Documento original preservado</p>
+                  <p class="mt-1">Resumo indisponível para esta importação antiga</p>
                 </template>
                 <template v-else>
                   <p>{{ item.resumo.novos.length }} novos · {{ item.resumo.removidos.length }} desativados</p>
                   <p class="mt-1">{{ item.resumo.inalterados.length }} inalterados · {{ item.resumo.ignoradas.length }} seções ignoradas</p>
                 </template>
-              </td>
-              <td class="px-4 py-3.5">
-                <a :href="`/api/importacoes/${item.id}/arquivo`" class="interactive inline-flex min-h-8 items-center gap-1.5 rounded-control border border-border bg-surface px-2.5 font-semibold hover:bg-surface-raised" :download="item.nome_arquivo">
-                  <Download :size="13" aria-hidden="true" /> Baixar
-                </a>
               </td>
             </tr>
           </tbody>

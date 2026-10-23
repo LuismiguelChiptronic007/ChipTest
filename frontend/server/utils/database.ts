@@ -25,17 +25,6 @@ function getRawWorkerEnv(event: H3Event): Record<string, unknown> {
   return env
 }
 
-function isR2Bucket(value: unknown): value is R2Bucket {
-  return typeof value === 'object'
-    && value !== null
-    && 'put' in value
-    && typeof value.put === 'function'
-    && 'get' in value
-    && typeof value.get === 'function'
-    && 'delete' in value
-    && typeof value.delete === 'function'
-}
-
 export function getDatabase(event: H3Event): D1Database {
   const database: unknown = getRawWorkerEnv(event).DB
   if (!isD1Database(database)) {
@@ -45,17 +34,6 @@ export function getDatabase(event: H3Event): D1Database {
     })
   }
   return database
-}
-
-export function getImportacoesBucket(event: H3Event): R2Bucket {
-  const bucket: unknown = getRawWorkerEnv(event).IMPORTS_BUCKET
-  if (!isR2Bucket(bucket)) {
-    throw createError({
-      statusCode: 503,
-      statusMessage: 'O armazenamento privado de importações não está configurado no Cloudflare R2.',
-    })
-  }
-  return bucket
 }
 
 export function getWorkerEnv(event: H3Event): WorkerRuntimeEnv {
