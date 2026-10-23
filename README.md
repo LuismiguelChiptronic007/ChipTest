@@ -8,6 +8,12 @@ Sistema web da Chiptronic para cadastro de códigos de veículos e acompanhament
 - `backend/`: serviços e regras de negócio TypeScript compartilhadas pelas rotas.
 - `database/migrations/`: migrations SQL compatíveis com SQLite/D1.
 
+## Build na Vercel
+
+O `frontend/nuxt.config.ts` seleciona o preset Nitro `vercel` quando a variável `VERCEL=1` está presente (definida automaticamente pela Vercel). Assim, `nuxt build` gera a saída de funções da Vercel em vez de uma saída Cloudflare que não contém a pasta estática `dist`. No projeto Vercel, use **Framework Preset: Nuxt.js**, **Root Directory: `frontend`**, comando de build `npm run build` e deixe **Output Directory** vazio/automático; não configure `dist`.
+
+Isso configura o formato do build, mas não substitui o D1: as rotas Nitro ainda dependem de `event.context.cloudflare.env.DB`. Elas não estarão funcionais na Vercel até a camada de dados receber uma integração acessível nesse runtime.
+
 ## Requisitos
 
 - Node.js 20 ou superior e npm.

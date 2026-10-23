@@ -4,9 +4,10 @@ import { defineNuxtModule } from '@nuxt/kit'
 const cloudflareNitroPreset = defineNuxtModule({
   setup(_options, nuxt) {
     nuxt.hook('nitro:config', (config) => {
+      const preset = process.env.VERCEL === '1' ? 'vercel' : 'cloudflare-module'
       Object.assign(config, {
-        preset: 'cloudflare-module',
-        compatibilityDate: '2026-10-22',
+        preset,
+        ...(preset === 'cloudflare-module' ? { compatibilityDate: '2026-10-22' } : {}),
       })
     })
   },
