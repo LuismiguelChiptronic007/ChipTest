@@ -55,6 +55,7 @@ export default defineNuxtConfig({
         paths: {
           htmlparser2: ['../node_modules/htmlparser2'],
           domhandler: ['../node_modules/domhandler'],
+          zod: ['../node_modules/zod'],
         },
       },
       exclude: ['../../backend/**/*.test.ts'],
