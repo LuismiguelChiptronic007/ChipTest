@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { Activity, ArrowLeft, CheckCircle2, Clock3, Copy, FileText, History, MinusCircle, Pencil, RefreshCw, ShieldAlert, Trash2, Upload, XCircle } from '@lucide/vue'
+import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Clock3, Copy, FileText, History, MessageSquare, MinusCircle, Pencil, RefreshCw, ShieldAlert, Trash2, Upload, XCircle } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { z } from 'zod'
 import { tipoSecaoBancoSchema, type TipoSecaoBanco } from '@backend/schemas/importacoes'
 import type { AlteracaoCodigo, CodigoRecord } from '@backend/services/codigos'
+import LoadOverviewPinnedItem from '../../components/codigos/LoadOverviewPinnedItem.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -16,7 +17,19 @@ const alteracoes = ref<AlteracaoCodigo[]>([])
 const carregandoHistorico = ref(false)
 const carregandoSecoes = ref(false)
 const carregandoTestes = ref(false)
-const aba = ref<'secoes' | 'alteracoes'>('secoes')
+const aba = ref<'secoes' | 'alteracoes' | 'ocorrencias'>(route.query.aba === 'ocorrencias' ? 'ocorrencias' : 'secoes')
+const ocorrencias = ref<Array<{
+  id: string
+  titulo: string
+  gravidade: 'baixa' | 'media' | 'alta' | 'critica'
+  status: 'aberta' | 'em_analise' | 'resolvida' | 'descartada'
+  criado_em: string
+}>>([])
+const carregandoOcorrencias = ref(false)
+const carregouOcorrencias = ref(false)
+const ocorrenciasTotal = ref(0)
+const ocorrenciasAbertas = computed(() => ocorrencias.value.filter(item => item.status === 'aberta' || item.status === 'em_analise'))
+const ocorrenciasResolvidas = computed(() => ocorrencias.value.filter(item => item.status === 'resolvida'))
 const secaoSelecionada = ref<TipoSecaoBanco>('dados_central')
 const tiposTeste = ['bancada', 'campo'] as const
 const testesCodigo = ref<Array<{
@@ -124,10 +137,10 @@ const status = computed(() => {
 })
 
 const rotulosCampos: Record<string, string> = {
-  codigo: 'Código',
-  marca: 'Marca',
-  modelo: 'Modelo',
-  motor: 'Motor',
+  codigo: 'Código DSD',
+  marca: 'Montadora',
+  modelo: 'Sistema',
+  motor: 'Tipo de sistema',
   ano: 'Ano',
   observacoes: 'Observações',
   excluido_em: 'Exclusão lógica',
@@ -305,8 +318,35 @@ async function excluirCodigo() {
   }
 }
 
-watch(aba, (value: 'secoes' | 'alteracoes') => {
+async function carregarOcorrenciasCodigo() {
+  carregandoOcorrencias.value = true
+  try {
+    const resposta = z.object({
+      total: z.number().int().nonnegative(),
+      ocorrencias: z.array(z.object({
+        id: z.string().uuid(),
+        titulo: z.string(),
+        gravidade: z.enum(['baixa', 'media', 'alta', 'critica']),
+        status: z.enum(['aberta', 'em_analise', 'resolvida', 'descartada']),
+        criado_em: z.string(),
+      })),
+    }).safeParse(await $fetch<unknown>('/api/ocorrencias', {
+      query: { codigoId: codigoId.value, limite: 100, ordenar: 'recentes' },
+    }))
+    if (!resposta.success) throw new Error('A lista de ocorrências deste código está em formato inválido.')
+    ocorrencias.value = resposta.data.ocorrencias
+    ocorrenciasTotal.value = resposta.data.total
+    carregouOcorrencias.value = true
+  } catch (error: unknown) {
+    erro.value = mensagemDeErro(error, 'Não foi possível carregar as ocorrências deste código.')
+  } finally {
+    carregandoOcorrencias.value = false
+  }
+}
+
+watch(aba, (value: 'secoes' | 'alteracoes' | 'ocorrencias') => {
   if (value === 'alteracoes' && !alteracoes.value.length) void carregarHistorico()
+  if (value === 'ocorrencias' && !carregouOcorrencias.value) void carregarOcorrenciasCodigo()
 })
 
 onMounted(() => void carregarCodigo())
@@ -361,7 +401,7 @@ onMounted(() => {
               <UiBadge :tone="status.tone"><component :is="status.icon" :size="14" aria-hidden="true" />{{ status.label }}</UiBadge>
             </div>
             <h2 class="mt-2 text-lg font-bold tracking-tight">{{ codigo.marca }} {{ codigo.modelo }}</h2>
-            <p class="mt-1 text-sm text-foreground-muted">{{ codigo.motor || 'Motorização não informada' }}<span v-if="codigo.ano"> · Ano {{ codigo.ano }}</span></p>
+            <p class="mt-1 text-sm text-foreground-muted">{{ codigo.motor || 'Tipo de sistema não informado' }}</p>
           </div>
           <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-xs">
             <div><p class="text-[10px] uppercase tracking-wide text-foreground-subtle">Setor responsável</p><p class="mt-1 font-semibold">{{ codigo.setor || 'Não informado' }}</p></div>
@@ -376,6 +416,7 @@ onMounted(() => {
       <div class="mt-5 flex gap-1 border-b border-border" role="tablist" aria-label="Informações do código">
         <button type="button" role="tab" :aria-selected="aba === 'secoes'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'secoes' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'secoes'"><FileText :size="15" aria-hidden="true" /> Seções técnicas</button>
         <button type="button" role="tab" :aria-selected="aba === 'alteracoes'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'alteracoes' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'alteracoes'"><History :size="15" aria-hidden="true" /> Histórico de alterações</button>
+        <button type="button" role="tab" :aria-selected="aba === 'ocorrencias'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'ocorrencias' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'ocorrencias'"><MessageSquare :size="15" aria-hidden="true" /> Ocorrências <UiBadge :tone="ocorrenciasAbertas.length ? 'warning' : 'neutral'">{{ ocorrenciasAbertas.length }}</UiBadge></button>
       </div>
 
       <div v-if="aba === 'secoes'" class="mt-4 grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_280px]">
@@ -474,7 +515,7 @@ onMounted(() => {
         </aside>
       </div>
 
-      <section v-else class="surface-card mt-4 p-4 sm:p-5">
+      <section v-else-if="aba === 'alteracoes'" class="surface-card mt-4 p-4 sm:p-5">
         <div class="flex items-start justify-between gap-4 border-b border-border pb-4">
           <div><h2 class="text-sm font-bold">Histórico de alterações</h2><p class="mt-1 text-xs text-foreground-muted">Registro de criação, edição e exclusão lógica deste código.</p></div>
           <UiButton variant="secondary" size="sm" :loading="carregandoHistorico" @click="carregarHistorico"><template #icon><RefreshCw :size="14" aria-hidden="true" /></template>Atualizar</UiButton>
@@ -499,6 +540,31 @@ onMounted(() => {
           <UiEmptyState title="Ainda não há alterações registradas" description="As mudanças feitas neste cadastro serão exibidas nesta linha do tempo." :icon="History" />
         </div>
       </section>
+      <section v-else class="surface-card mt-4 p-4 sm:p-5">
+        <div class="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
+          <div><h2 class="text-sm font-bold">Ocorrências do código</h2><p class="mt-1 text-xs text-foreground-muted">{{ ocorrenciasAbertas.length }} aberta(s) · {{ ocorrenciasResolvidas.length }} resolvida(s)</p></div>
+          <NuxtLink :to="`/ocorrencias/criar?codigo=${codigo.id}`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"><AlertTriangle :size="14" aria-hidden="true" /> Nova ocorrência</NuxtLink>
+        </div>
+        <div class="mt-4">
+          <LoadOverviewPinnedItem :codigo-id="codigo.id" />
+          <h3 class="mt-5 mb-1 text-[10px] font-bold uppercase tracking-[0.13em] text-foreground-subtle">Erros · {{ ocorrenciasTotal }}</h3>
+        </div>
+        <div v-if="carregandoOcorrencias" class="space-y-3 py-4"><UiSkeleton v-for="item in 3" :key="item" variant="block" /></div>
+        <ul v-else-if="ocorrencias.length" class="mt-2 divide-y divide-border">
+          <li v-for="item in ocorrencias" :key="item.id" class="py-3">
+            <NuxtLink :to="`/ocorrencias/${item.id}`" class="interactive flex flex-wrap items-center justify-between gap-3 rounded-control p-2 hover:bg-surface-raised">
+              <span class="flex min-w-0 items-center gap-2">
+                <AlertTriangle v-if="item.status === 'aberta' || item.status === 'em_analise'" :size="15" class="shrink-0 text-warning" aria-label="Ocorrência aberta" />
+                <CheckCircle2 v-else-if="item.status === 'resolvida'" :size="15" class="shrink-0 text-success" aria-label="Ocorrência resolvida" />
+                <MinusCircle v-else :size="15" class="shrink-0 text-neutral" aria-label="Ocorrência descartada" />
+                <span class="truncate text-xs font-semibold">{{ item.titulo }}</span>
+              </span>
+              <span class="flex shrink-0 items-center gap-3 text-[10px] text-foreground-muted"><span>{{ item.gravidade === 'critica' ? 'Crítica' : item.gravidade === 'alta' ? 'Alta' : item.gravidade === 'media' ? 'Média' : 'Baixa' }}</span><span>{{ formatarData(item.criado_em) }}</span></span>
+            </NuxtLink>
+          </li>
+        </ul>
+        <div v-else class="py-6"><UiEmptyState title="Nenhuma ocorrência neste código" description="Quando uma falha for relatada, ela aparecerá aqui com seu status e gravidade." :icon="MessageSquare" /></div>
+      </section>
     </div>
 
     <UiOverlay v-model="modalExclusao" title="Excluir código?" description="A exclusão é lógica e preserva o histórico de testes e alterações.">
@@ -510,20 +576,6 @@ onMounted(() => {
         <UiButton variant="secondary" :disabled="removendo" @click="modalExclusao = false">Cancelar</UiButton>
         <UiButton variant="danger" :loading="removendo" @click="excluirCodigo"><template #icon><Trash2 :size="14" aria-hidden="true" /></template>{{ removendo ? 'Excluindo...' : 'Excluir código' }}</UiButton>
       </template>
-
-      <style scoped>
-      .rich-content :deep(table) { width: 100%; border-collapse: collapse; }
-      .rich-content :deep(th), .rich-content :deep(td) { border: 1px solid hsl(var(--border)); padding: 0.55rem 0.7rem; text-align: left; }
-      .rich-content :deep(th) { background: hsl(var(--surface-raised)); font-weight: 700; }
-      .rich-content :deep(tbody tr:nth-child(even)) { background: hsl(var(--surface-raised)); }
-      .rich-content :deep(ul), .rich-content :deep(ol) { margin: 0.65rem 0; padding-left: 1.5rem; }
-      .rich-content :deep(ul) { list-style: disc; }
-      .rich-content :deep(ol) { list-style: decimal; }
-      .rich-content :deep(p) { margin: 0.6rem 0; }
-      .rich-content :deep(code), .rich-content :deep(pre) { border-radius: 0.35rem; background: hsl(var(--surface-raised)); font-family: var(--font-mono); }
-      .rich-content :deep(code) { padding: 0.1rem 0.25rem; }
-      .rich-content :deep(pre) { overflow: auto; padding: 0.75rem; }
-      </style>
     </UiOverlay>
     <UiToast
       v-model="notificacaoSalva"

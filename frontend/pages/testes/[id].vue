@@ -29,6 +29,7 @@ type ItemTeste = {
   observacao: string | null
   testado_por: string | null
   testado_em: string | null
+  ocorrencias_count: number
 }
 type TesteDetalhe = {
   teste: {
@@ -63,7 +64,6 @@ const modalFinalizar = ref(false)
 const statusFinal = ref<'aprovado' | 'reprovado' | 'cancelado'>('aprovado')
 const finalizando = ref(false)
 const erroFinalizar = ref('')
-const tentativasOcorrencia = ref(new Set<string>())
 const salvamentosPendentes = new Map<string, ReturnType<typeof setTimeout>>()
 const salvamentosEmAndamento = new Map<string, Promise<unknown>>()
 
@@ -93,6 +93,7 @@ const respostaSchema = z.object({
     observacao: z.string().nullable(),
     testado_por: z.string().nullable(),
     testado_em: z.string().nullable(),
+    ocorrencias_count: z.number().int().nonnegative(),
   })),
 })
 
@@ -115,6 +116,9 @@ const aprovados = computed(() => itensChecklist.value.filter((item: ItemTeste) =
 const reprovados = computed(() => itensChecklist.value.filter((item: ItemTeste) => item.resultado === 'reprovado').length)
 const total = computed(() => itensChecklist.value.length)
 const progresso = computed(() => total.value ? Math.round(itensTestados.value / total.value * 100) : 0)
+const itensReprovadosSemOcorrencia = computed(() => itensChecklist.value.filter(
+  (item: ItemTeste) => item.resultado === 'reprovado' && item.ocorrencias_count === 0,
+))
 const sugestaoFinal = computed(() => {
   const itens = itensChecklist.value
   if (itens.some((item: ItemTeste) => item.resultado === 'reprovado')) return 'reprovado' as const
@@ -250,13 +254,35 @@ async function finalizar() {
   }
 }
 
-function prepararOcorrencia(item: ItemTeste) {
-  tentativasOcorrencia.value.add(item.id)
-  erroSalvamento.value = `A criação de ocorrência será conectada na Fase 6. O resultado reprovado de “${item.nome_snapshot}” já pode ser salvo.`
+async function prepararOcorrencia(item: ItemTeste) {
   if (item.resultado !== 'reprovado') {
     item.resultado = 'reprovado'
-    item.observacao = item.observacao?.trim() || ''
   }
+  if (!item.observacao?.trim()) {
+    erroSalvamento.value = `Informe a observação obrigatória para reprovar “${item.nome_snapshot}” antes de abrir a ocorrência.`
+    estadoSalvamento.value = 'erro'
+    return
+  }
+  const temporizador = salvamentosPendentes.get(item.id)
+  if (temporizador) clearTimeout(temporizador)
+  salvamentosPendentes.delete(item.id)
+  await salvarItem(item)
+  if (estadoSalvamento.value === 'erro' || !teste.value) return
+  await navigateTo({
+    path: '/ocorrencias/nova',
+    query: {
+      codigo: teste.value.codigo_id,
+      dsdCodigo: teste.value.codigo,
+      marca: teste.value.marca,
+      modelo: teste.value.modelo,
+      teste: teste.value.id,
+      testeItem: item.id,
+      ...(item.codigo_item_id ? { codigoItem: item.codigo_item_id } : {}),
+      dsd: item.nome_snapshot,
+      titulo: `Falha no item: ${item.nome_snapshot}`,
+      descricao: item.observacao,
+    },
+  })
 }
 
 async function salvarAlteracoesPendentes(): Promise<boolean> {
@@ -420,7 +446,7 @@ onBeforeUnmount(() => {
                   @blur="salvarItem(item)"
                 />
                 <UiButton v-if="item.resultado === 'reprovado' && !somenteLeitura" variant="ghost" size="sm" class="self-start text-danger" @click="prepararOcorrencia(item)">
-                  <template #icon><AlertTriangle :size="14" aria-hidden="true" /></template>Abrir ocorrência
+                  <template #icon><AlertTriangle :size="14" aria-hidden="true" /></template>Reprovar e abrir ocorrência
                 </UiButton>
               </div>
             </li>
@@ -437,6 +463,34 @@ onBeforeUnmount(() => {
           </div>
           <AppAlert v-if="itensTestados < total" tone="info">
             Há {{ total - itensTestados }} item(ns) não testado(s). Você pode finalizar mesmo assim.
+          </AppAlert>
+          <AppAlert v-if="itensReprovadosSemOcorrencia.length" tone="warning">
+            <div class="space-y-2">
+              <p>{{ itensReprovadosSemOcorrencia.length }} item(ns) reprovado(s) ainda sem ocorrência.</p>
+              <NuxtLink
+                v-for="item in itensReprovadosSemOcorrencia"
+                :key="item.id"
+                :to="{
+                  path: '/ocorrencias/nova',
+                  query: {
+                    codigo: teste.codigo_id,
+                    dsdCodigo: teste.codigo,
+                    marca: teste.marca,
+                    modelo: teste.modelo,
+                    teste: teste.id,
+                    testeItem: item.id,
+                    ...(item.codigo_item_id ? { codigoItem: item.codigo_item_id } : {}),
+                    dsd: item.nome_snapshot,
+                    titulo: `Falha no item: ${item.nome_snapshot}`,
+                    descricao: item.observacao || '',
+                  },
+                }"
+                class="flex min-h-9 items-center gap-2 rounded-control px-2 text-left text-xs font-semibold text-warning hover:bg-warning-surface"
+              >
+                <AlertTriangle :size="14" aria-hidden="true" />
+                <span class="truncate">Abrir ocorrência · {{ item.nome_snapshot }}</span>
+              </NuxtLink>
+            </div>
           </AppAlert>
           <label class="block space-y-2 text-sm font-semibold">
             Status geral sugerido

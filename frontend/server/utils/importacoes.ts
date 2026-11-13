@@ -10,6 +10,7 @@ import type { H3Event } from 'h3'
 import type { UsuarioAutenticado } from './auth'
 import { getDatabase } from './database'
 import { hashArquivoDocx } from './importacao-docx'
+import { excluirArquivoD1, gerarChaveStorage, gravarArquivoD1 } from './arquivos-d1'
 
 type ItemAtual = ItemPersistidoParaComparar
 
@@ -154,7 +155,9 @@ export async function confirmarImportacao(
   const itensReordenados = comparacao.reordenados
 
   const importacaoId = crypto.randomUUID()
+  const chaveStorage = gerarChaveStorage()
   for (const item of novosItens) item.importacao_id = importacaoId
+  await gravarArquivoD1(db, chaveStorage, arquivo)
 
   const comandos: D1PreparedStatement[] = []
   if (novoCodigo) {
@@ -172,9 +175,9 @@ export async function confirmarImportacao(
 
   comandos.push(
     db.prepare(
-      `INSERT INTO importacoes (id, codigo_id, nome_arquivo, usuario_id, resumo, status)
-       VALUES (?, ?, ?, ?, ?, 'concluida')`,
-    ).bind(importacaoId, codigoId, nomeArquivo.slice(0, 255), usuario.id, JSON.stringify(resumo)),
+      `INSERT INTO importacoes (id, codigo_id, nome_arquivo, arquivo_key, usuario_id, resumo, status)
+       VALUES (?, ?, ?, ?, ?, ?, 'concluida')`,
+    ).bind(importacaoId, codigoId, nomeArquivo.slice(0, 255), chaveStorage, usuario.id, JSON.stringify(resumo)),
   )
 
   if (novosItens.length) {
@@ -224,6 +227,7 @@ export async function confirmarImportacao(
   try {
     await db.batch(comandos)
   } catch (error: unknown) {
+    await excluirArquivoD1(db, chaveStorage)
     if (error instanceof Error && error.message.includes('UNIQUE constraint failed: codigos.codigo')) {
       throw createError({
         statusCode: 409,

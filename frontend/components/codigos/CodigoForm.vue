@@ -11,7 +11,6 @@ const props = withDefaults(defineProps<{
 
 const form = reactive({
   codigo: '',
-  
   marca: '',
   modelo: '',
   motor: '',
@@ -150,11 +149,10 @@ onBeforeUnmount(() => window.removeEventListener('beforeunload', antesDeFechar))
               </div>
             </div>
             <div class="mt-5 grid gap-4 sm:grid-cols-2">
-              <UiField id="codigo" v-model="form.codigo" label="Código do veículo" required maxlength="80" placeholder="Ex.: CT-2048" hint="O código é único e será exibido em fonte técnica." />
-              <UiField id="marca" v-model="form.marca" label="Marca" required maxlength="80" placeholder="Ex.: Volkswagen" />
-              <UiField id="modelo" v-model="form.modelo" label="Modelo" required maxlength="80" placeholder="Ex.: Golf GTI" />
-              <UiField id="motor" v-model="form.motor" label="Motor" maxlength="120" placeholder="Ex.: 2.0 TSI EA888" />
-              <UiField id="ano" v-model="form.ano" label="Ano do modelo" type="number" min="1886" max="2200" inputmode="numeric" placeholder="Ex.: 2024" />
+              <UiField id="codigo" v-model="form.codigo" label="Código DSD" required maxlength="80" placeholder="Ex.: DSD0747" hint="O código DSD é único e será exibido em fonte técnica." />
+              <UiField id="marca" v-model="form.marca" label="Montadora" required maxlength="80" placeholder="Ex.: Volkswagen" />
+              <UiField id="modelo" v-model="form.modelo" label="Sistema" required maxlength="80" />
+              <UiField id="motor" v-model="form.motor" label="Tipo de sistema" maxlength="120" />
             </div>
           </UiCard>
 

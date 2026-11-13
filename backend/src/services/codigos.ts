@@ -109,7 +109,8 @@ const camposCodigo = `
   u.setor_id, s.nome AS setor,
   lt.status AS status_teste, lt.tipo AS ultimo_teste_tipo, lt.data_inicio AS ultimo_teste_data,
   CASE WHEN lt.id IS NULL THEN NULL ELSE lt.tipo || ':' || lt.status END AS ultimo_teste,
-  (SELECT COUNT(*) FROM ocorrencias o WHERE o.codigo_id = c.id AND o.status <> 'resolvida') AS ocorrencias_abertas
+  (SELECT COUNT(*) FROM ocorrencias o
+   WHERE o.codigo_id = c.id AND o.status NOT IN ('resolvida', 'descartada')) AS ocorrencias_abertas
 `
 
 export async function listarCodigos(db: D1Database, filtros: ListagemCodigosInput) {
@@ -297,7 +298,7 @@ export async function obterMetricasPainel(db: D1Database) {
     ) WHERE numero_linha = 1 AND status = 'em_andamento'`),
     db.prepare(`SELECT COUNT(DISTINCT o.codigo_id) AS total FROM ocorrencias o
       JOIN codigos c ON c.id = o.codigo_id
-      WHERE c.excluido_em IS NULL AND o.status <> 'resolvida'`),
+      WHERE c.excluido_em IS NULL AND o.status NOT IN ('resolvida', 'descartada')`),
     db.prepare(`SELECT COALESCE(lt.status, 'sem_teste') AS status, COUNT(*) AS total
       FROM codigos c
       LEFT JOIN (

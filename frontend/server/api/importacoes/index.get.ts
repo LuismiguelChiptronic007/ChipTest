@@ -9,6 +9,7 @@ interface ImportacaoRow {
   marca: string
   modelo: string
   nome_arquivo: string
+  arquivo_key: string | null
   usuario_id: string | null
   usuario_nome: string | null
   resumo: string
@@ -28,6 +29,7 @@ export default defineEventHandler(async (event) => {
   await exigirLeituraCodigos(event)
   const resultado = await getDatabase(event).prepare(
     `SELECT i.id, i.codigo_id, c.codigo, c.marca, c.modelo, i.nome_arquivo,
+      i.arquivo_key,
       i.usuario_id, u.nome AS usuario_nome, i.resumo, i.status, i.criado_em
      FROM importacoes i
      JOIN codigos c ON c.id = i.codigo_id
@@ -39,6 +41,7 @@ export default defineEventHandler(async (event) => {
   return {
     importacoes: (resultado.results ?? []).map(item => ({
       ...item,
+      tem_arquivo_original: Boolean(item.arquivo_key),
       resumo: normalizarResumo(item.resumo),
     })),
   }

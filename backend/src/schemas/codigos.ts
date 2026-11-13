@@ -9,7 +9,7 @@ export const codigoSchema = z.object({
   codigo: codigoTexto.transform(value => value.toLocaleUpperCase('pt-BR')),
   marca: codigoTexto,
   modelo: codigoTexto,
-  motor: z.string().trim().max(120, 'O motor deve ter no máximo 120 caracteres.').nullish().transform(value => value || null),
+  motor: z.string().trim().max(120, 'O tipo de sistema deve ter no máximo 120 caracteres.').nullish().transform(value => value || null),
   ano: z.preprocess(
     value => value === '' || value === undefined || value === null ? null : Number(value),
     z.number().int('Informe um ano válido.').min(1886, 'O ano deve ser igual ou posterior a 1886.').max(2200, 'Informe um ano válido.').nullable(),

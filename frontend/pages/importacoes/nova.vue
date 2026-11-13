@@ -441,16 +441,15 @@ onBeforeUnmount(() => {
             Criar um novo código
           </label>
           <div v-if="!criarNovo" class="mt-4 space-y-3">
-            <UiField id="buscar-codigo-importacao" label="Buscar código existente" :model-value="codigoBusca" placeholder="Código, marca ou modelo" @update:model-value="atualizarBuscaCodigo" />
+            <UiField id="buscar-codigo-importacao" label="Buscar código existente" :model-value="codigoBusca" placeholder="DSD, montadora ou sistema" @update:model-value="atualizarBuscaCodigo" />
             <UiSelect id="codigo-destino" label="Código de destino" :options="opcoesCodigo" :model-value="codigoId" :disabled="carregandoCodigos" @update:model-value="selecionarCodigo" />
             <p v-if="analise?.codigoSugerido" class="text-xs text-foreground-muted">Código sugerido: <span class="font-mono font-semibold text-foreground">{{ analise.codigoSugerido }}</span></p>
           </div>
           <div v-else class="mt-4 grid gap-3 sm:grid-cols-2">
-            <UiField id="novo-codigo" label="Código" v-model="novoCodigo.codigo" placeholder="Ex.: CHP-0231" />
-            <UiField id="nova-marca" label="Marca" v-model="novoCodigo.marca" placeholder="Ex.: Volkswagen" />
-            <UiField id="novo-modelo" label="Modelo" v-model="novoCodigo.modelo" placeholder="Ex.: Gol" />
-            <UiField id="novo-motor" label="Motor" v-model="novoCodigo.motor" placeholder="Ex.: 1.6" />
-            <UiField id="novo-ano" label="Ano" v-model="novoCodigo.ano" type="number" min="1886" max="2200" />
+            <UiField id="novo-codigo" label="Código DSD" v-model="novoCodigo.codigo" placeholder="Ex.: DSD0747" />
+            <UiField id="nova-marca" label="Montadora" v-model="novoCodigo.marca" placeholder="Ex.: Volkswagen" />
+            <UiField id="novo-modelo" label="Sistema" v-model="novoCodigo.modelo" />
+            <UiField id="novo-motor" label="Tipo de sistema" v-model="novoCodigo.motor" />
             <UiField id="nova-observacao" label="Observações" v-model="novoCodigo.observacoes" class="sm:col-span-2" />
           </div>
           <div class="mt-6 flex justify-end">
@@ -474,14 +473,13 @@ onBeforeUnmount(() => {
             Criar um novo código
           </label>
           <div v-if="criarNovo" class="mt-4 grid gap-3 sm:grid-cols-2">
-            <UiField id="novo-codigo-revisao" label="Código" v-model="novoCodigo.codigo" />
-            <UiField id="nova-marca-revisao" label="Marca" v-model="novoCodigo.marca" />
-            <UiField id="novo-modelo-revisao" label="Modelo" v-model="novoCodigo.modelo" />
-            <UiField id="novo-motor-revisao" label="Motor" v-model="novoCodigo.motor" />
-            <UiField id="novo-ano-revisao" label="Ano" v-model="novoCodigo.ano" type="number" min="1886" max="2200" />
+            <UiField id="novo-codigo-revisao" label="Código DSD" v-model="novoCodigo.codigo" />
+            <UiField id="nova-marca-revisao" label="Montadora" v-model="novoCodigo.marca" />
+            <UiField id="novo-modelo-revisao" label="Sistema" v-model="novoCodigo.modelo" />
+            <UiField id="novo-motor-revisao" label="Tipo de sistema" v-model="novoCodigo.motor" />
           </div>
           <div v-else class="mt-4 grid gap-3 sm:grid-cols-2 sm:items-end">
-            <UiField id="buscar-codigo-revisao" label="Buscar código" :model-value="codigoBusca" placeholder="Código, marca ou modelo" @update:model-value="atualizarBuscaCodigo" />
+            <UiField id="buscar-codigo-revisao" label="Buscar código" :model-value="codigoBusca" placeholder="DSD, montadora ou sistema" @update:model-value="atualizarBuscaCodigo" />
             <UiSelect id="codigo-destino-revisao" label="Selecionar destino" :options="opcoesCodigo" :model-value="codigoId" @update:model-value="selecionarCodigo" />
           </div>
         </UiCard>

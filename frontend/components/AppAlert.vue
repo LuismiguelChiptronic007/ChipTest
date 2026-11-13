@@ -1,6 +1,6 @@
 <script setup lang="ts">
 withDefaults(defineProps<{
-  tone?: 'error' | 'success' | 'info'
+  tone?: 'error' | 'success' | 'info' | 'warning'
 }>(), {
   tone: 'info',
 })
@@ -9,6 +9,7 @@ const tones = {
   error: 'border-danger/20 bg-danger-surface text-danger',
   success: 'border-success/20 bg-success-surface text-success',
   info: 'border-info/20 bg-info-surface text-info',
+  warning: 'border-warning/20 bg-warning-surface text-warning',
 }
 </script>
 

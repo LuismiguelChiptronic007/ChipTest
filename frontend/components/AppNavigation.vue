@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Activity, AlertTriangle, CarFront, FileText, LayoutDashboard, Users } from '@lucide/vue'
+import { Activity, CarFront, FileText, LayoutDashboard, Users } from '@lucide/vue'
 import type { Component } from 'vue'
 
 const emit = defineEmits<{
@@ -9,6 +9,8 @@ withDefaults(defineProps<{ collapsed?: boolean }>(), { collapsed: false })
 
 const auth = useAuthStore()
 const route = useRoute()
+const execucaoTestesAtiva = computed(() => route.path.startsWith('/testes')
+  || (route.path === '/ocorrencias/criar' && route.query.origem === 'testes'))
 
 const groups = computed(() => {
   const sections: Array<{
@@ -18,7 +20,6 @@ const groups = computed(() => {
     { label: 'Painel', items: [{ label: 'Visão geral', icon: LayoutDashboard, to: '/painel', available: true }] },
     { label: 'Códigos', items: [{ label: 'Códigos de veículos', icon: CarFront, to: '/codigos', available: true }] },
     { label: 'Testes', items: [{ label: 'Execução de testes', icon: Activity, to: '/testes', available: true }] },
-    { label: 'Ocorrências', items: [{ label: 'Ocorrências', icon: AlertTriangle, available: false }] },
     { label: 'Importações', items: [{ label: 'Histórico de importações', icon: FileText, to: '/importacoes', available: true }] },
   ]
 
@@ -47,13 +48,13 @@ const groups = computed(() => {
               { 'justify-center px-1': collapsed },
               route.path === item.to
                 || (item.to === '/codigos' && route.path.startsWith('/codigos'))
-                || (item.to === '/testes' && route.path.startsWith('/testes'))
+                || (item.to === '/testes' && execucaoTestesAtiva)
                 || (item.to === '/importacoes' && route.path.startsWith('/importacoes'))
                 ? 'bg-info-surface text-info'
                 : 'text-foreground-muted hover:bg-surface-raised hover:text-foreground',
             ]"
             :title="collapsed ? item.label : undefined"
-            :aria-current="route.path === item.to || (item.to === '/codigos' && route.path.startsWith('/codigos')) || (item.to === '/testes' && route.path.startsWith('/testes')) || (item.to === '/importacoes' && route.path.startsWith('/importacoes')) ? 'page' : undefined"
+            :aria-current="route.path === item.to || (item.to === '/codigos' && route.path.startsWith('/codigos')) || (item.to === '/testes' && execucaoTestesAtiva) || (item.to === '/importacoes' && route.path.startsWith('/importacoes')) ? 'page' : undefined"
             @click="emit('navigate')"
           >
             <component :is="item.icon" :size="17" aria-hidden="true" />

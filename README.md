@@ -116,7 +116,7 @@ Para aplicar todas as migrations no banco local, execute `npm run db:local:migra
 
 A rota `/importacoes/nova` analisa arquivos `.docx` de até 10 MB e importa somente os nomes dos títulos nível 2 (`Heading 2`) sob cada seção nível 1 (`Heading 1`). Os nomes são classificados em “Original” e “Português” pelo separador `/DieselDiag:`. Seções não reconhecidas podem ser atribuídas manualmente; seções relacionadas a falhas são marcadas automaticamente como fora do escopo. Conteúdo normal abaixo dos títulos é ignorado.
 
-Os itens ativos são armazenados em `codigo_itens` no D1. Na reimportação, o sistema compara por seção, nome completo e ocorrência; itens removidos passam para `ativo = 0`, sem apagar o registro. A confirmação registra o nome do arquivo e o resumo (novos, removidos, inalterados e seções ignoradas), mas **não armazena o DOCX original**. A migration `0004_codigo_itens_por_secao.sql` divide os tipos anteriores `sensores_estados` em `sensores` e `estados`, preservando “falhas” para uma importação futura; `0006_importacoes_sem_arquivo.sql` torna opcional a antiga chave de arquivo.
+Os itens ativos são armazenados em `codigo_itens` no D1. Na reimportação, o sistema compara por seção, nome completo e ocorrência; itens removidos passam para `ativo = 0`, sem apagar o registro. A confirmação registra o nome do arquivo e o resumo (novos, removidos, inalterados e seções ignoradas); os documentos originais de novas importações também são armazenados privadamente no D1 e podem ser baixados no histórico. Arquivos são divididos em partes para não exceder o limite por linha do D1. Importações antigas, feitas quando os originais não eram armazenados, continuam sem o arquivo. A migration `0004_codigo_itens_por_secao.sql` divide os tipos anteriores `sensores_estados` em `sensores` e `estados`, preservando “falhas” para uma importação futura; `0006_importacoes_sem_arquivo.sql` torna opcional a antiga chave de arquivo.
 
 Admin e engenharia podem analisar e confirmar importações. Outros perfis ativos podem consultar o histórico de metadados e itens importados. Como o sistema usa D1, não há RLS do Supabase: as permissões são verificadas nas rotas de servidor.
 
@@ -154,7 +154,7 @@ Os registros usam identificadores e códigos `CT-DEMO-*`, são marcados em `codi
 npm run seed:clear
 ```
 
-O seed é idempotente: executar `npm run seed` novamente restaura/atualiza os mesmos registros de demonstração. `CT-DEMO-001` recebe dez itens de checklist distribuídos nos grupos técnicos, inclusive dois itens de sensor com o mesmo nome para testar snapshots independentes.
+O seed é idempotente: executar `npm run seed` novamente restaura/atualiza os mesmos registros de demonstração. `CT-DEMO-001` recebe dez itens de checklist distribuídos nos grupos técnicos, inclusive dois itens de sensor com o mesmo nome para testar snapshots independentes, além de duas ocorrências de exemplo (uma aberta e outra resolvida).
 
 ## Testes por item
 
@@ -181,4 +181,34 @@ Abra `/design-system` para visualizar os tokens, componentes de interface, estad
 
 O tema padrão é Âmbar industrial escuro, com preferência inicial sincronizada ao sistema operacional. A marca oficial fica em `frontend/components/BrandLogo.vue` e `frontend/public/brand/`; a assinatura clara é usada em fundo claro, e a escura em superfícies escuras. O favicon está em `frontend/public/favicon.svg`. E-mails de redefinição e páginas impressas usam a assinatura apropriada para fundo claro.
 
-As telas de autenticação compartilham o layout responsivo `AuthLayout`. As áreas autenticadas usam `AppShell`, com navegação adaptável, alternância de tema, busca global pelo atalho `Ctrl+K` e menu da conta. O painel apresenta dados reais do catálogo e dos testes D1. A integração de abertura de ocorrências a partir de um item reprovado será concluída na Fase 6.
+As telas de autenticação compartilham o layout responsivo `AuthLayout`. As áreas autenticadas usam `AppShell`, com navegação adaptável, alternância de tema, busca global pelo atalho `Ctrl+K` e menu da conta. O painel apresenta dados reais do catálogo e dos testes D1. O painel soma códigos com ocorrências abertas ou em análise, sem contar as resolvidas ou descartadas.
+
+## Ocorrências e anexos (Fase 6)
+
+A migration `0007_ocorrencias_com_anexos.sql` atualiza as ocorrências existentes, adiciona comentários, vínculo opcional com itens e responsável/resolução, cria índices e preserva registros antigos de anexos na tabela `anexos_legados`. A migration `0008_ocorrencias_tipo_teste.sql` adiciona o tipo de teste informado ao erro. Os novos anexos e os DOCX originais usam a mesma tabela privada `arquivo_partes`, armazenada no D1; o caminho de storage é um UUID aleatório e nunca usa o nome original.
+
+Os limites configuráveis estão em `backend/src/services/ocorrencias-config.ts`: até cinco arquivos por ocorrência, dez MB por arquivo e partes de um MB. A validação do servidor verifica extensão, assinatura de imagem/PDF/MP4, e codificação/conteúdo de texto. A visualização e o download passam por rotas autenticadas; imagens têm prévia inline. A tela aceita arrastar e soltar e oferece captura de foto pela câmera do celular.
+
+Todos os perfis ativos podem criar ocorrências e comentar. O formulário de criação registra tipo de teste, descrição e status: “Erro”, “Analisar” ou “Concluída”; “Analisar erro informado” é um nome alternativo para “Analisar”. O relator, engenharia e admin podem editar o relato e excluir anexos; apenas engenharia e admin podem mudar status, atribuir responsável e registrar resolução. As mudanças de status e responsável são gravadas em `historico_alteracoes`. Uma ocorrência só pode ser concluída a partir de “Analisar”; uma ocorrência concluída ou descartada pode ser reaberta como “Analisar”. Registros antigos descartados continuam disponíveis.
+
+### Testes vinculados a ocorrências
+
+A migration `0009_ocorrencia_testes.sql` cria `ocorrencia_testes` e `ocorrencia_teste_anexos`, vinculadas à tabela existente `ocorrencias`. A sequência por tipo é atribuída na instrução atômica de inserção do D1 e protegida por uma restrição única por ocorrência e tipo. As evidências usam a tabela privada `arquivo_partes` e as rotas autenticadas existentes como armazenamento privado; este projeto não usa Supabase Storage nem RLS. São permitidos até cinco arquivos de até dez MB por teste. Usuários autenticados podem consultar os testes; admin e engenharia, além do perfil correspondente (bancada ou campo), podem criar e gerenciar testes daquele tipo. Na página do erro, a aba ativa fica em `?tab=bancada` ou `?tab=campo`.
+
+### Validar a Fase 6
+
+No ambiente local:
+
+```powershell
+Set-Location frontend
+npm run db:local:migrate
+npm run seed
+npm test
+npm run typecheck
+```
+
+Com um usuário ativo, acesse `/codigos/CT-DEMO-001`, inicie um teste de bancada e reprove um item preenchendo a observação. Use **Reprovar e abrir ocorrência**; o formulário deve vir preenchido com código, teste e item. Adicione uma foto pelo seletor ou pela câmera, registre o relato e aguarde o envio. Na ocorrência, confira a prévia da imagem, publique um comentário e confira a linha do tempo.
+
+Entre com um perfil de engenharia (ou admin), altere o status para **Em análise**, atribua um responsável, informe a resolução e mude para **Resolvida**. Em seguida escolha **Reabrir · Em análise**. Confirme os eventos na linha do tempo e a ocorrência na aba do detalhe do código. Um item reprovado sem ocorrência também é sinalizado ao finalizar o teste e oferece atalho para criar o relato.
+
+Limitações conhecidas: os bytes de anexos e DOCX consomem espaço do próprio D1 e não há verificação antivírus; arquivos são limitados a 10 MB e downloads são processados pela aplicação. Documentos importados antes da migration não possuem original para baixar. O upload de DOCX permanece em uma única requisição; a plataforma de hospedagem pode rejeitar arquivos grandes antes de a aplicação recebê-los. D1 impõe limites por linha e por consulta; por isso o armazenamento binário é dividido em partes, conforme [limites atuais do D1](https://developers.cloudflare.com/d1/platform/limits/).

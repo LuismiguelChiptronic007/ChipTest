@@ -53,6 +53,20 @@ function uuid(index) {
 
 const statements = clearOnly
   ? [
+      `DELETE FROM arquivo_partes WHERE chave_storage IN (
+         SELECT chave_storage FROM anexos WHERE ocorrencia_id IN (
+           'f6000000-0000-4000-8000-000000000001',
+           'f6000000-0000-4000-8000-000000000002'
+         )
+       )`,
+      `DELETE FROM ocorrencia_comentarios WHERE ocorrencia_id IN (
+         'f6000000-0000-4000-8000-000000000001',
+         'f6000000-0000-4000-8000-000000000002'
+       )`,
+      `DELETE FROM ocorrencias WHERE id IN (
+         'f6000000-0000-4000-8000-000000000001',
+         'f6000000-0000-4000-8000-000000000002'
+       )`,
       `UPDATE codigos SET excluido_em = COALESCE(excluido_em, datetime('now')), atualizado_em = datetime('now')
        WHERE id IN (SELECT codigo_id FROM codigos_demo_seed)`,
       `UPDATE codigo_itens SET ativo = 0
@@ -99,6 +113,57 @@ if (!clearOnly) {
         nome_completo = excluded.nome_completo, nome_original = excluded.nome_original,
         nome_pt = excluded.nome_pt, ordem = excluded.ordem`
   }))
+  statements.push(
+    `INSERT INTO ocorrencias (
+         id, codigo_id, codigo_item_id, titulo, descricao, gravidade, status,
+         relatado_por, responsavel_id
+     )
+     SELECT
+         'f6000000-0000-4000-8000-000000000001',
+         ${sqlLiteral(seededCodeId)},
+         'e5000000-0000-4000-8000-000000000003',
+         'Leitura instável do sensor de rotação',
+         'Ocorrência de demonstração para validar relato, anexos e comentários. A leitura oscila durante a partida a frio.',
+         'alta', 'aberta',
+         (SELECT id FROM usuarios WHERE papel = 'admin' AND ativo = 1 ORDER BY criado_em LIMIT 1),
+         COALESCE(
+           (SELECT id FROM usuarios WHERE papel = 'engenharia' AND ativo = 1 ORDER BY criado_em LIMIT 1),
+           (SELECT id FROM usuarios WHERE papel = 'admin' AND ativo = 1 ORDER BY criado_em LIMIT 1)
+         )
+     WHERE EXISTS (SELECT 1 FROM codigos WHERE id = ${sqlLiteral(seededCodeId)} AND excluido_em IS NULL)
+     ON CONFLICT(id) DO UPDATE SET
+         titulo = excluded.titulo, descricao = excluded.descricao, gravidade = excluded.gravidade,
+         status = excluded.status, responsavel_id = excluded.responsavel_id,
+         atualizado_em = datetime('now')`,
+    `INSERT INTO ocorrencias (
+         id, codigo_id, titulo, descricao, gravidade, status, relatado_por,
+         responsavel_id, resolucao, resolvido_em
+     )
+     SELECT
+         'f6000000-0000-4000-8000-000000000002',
+         ${sqlLiteral(seededCodeId)},
+         'Parâmetro de marcha lenta fora da faixa',
+         'Ocorrência de demonstração concluída após ajuste e nova validação em bancada.',
+         'media', 'resolvida',
+         (SELECT id FROM usuarios WHERE papel = 'admin' AND ativo = 1 ORDER BY criado_em LIMIT 1),
+         (SELECT id FROM usuarios WHERE papel = 'admin' AND ativo = 1 ORDER BY criado_em LIMIT 1),
+         'Parâmetro recalibrado e validado no teste de bancada.',
+         datetime('now', '-1 day')
+     WHERE EXISTS (SELECT 1 FROM codigos WHERE id = ${sqlLiteral(seededCodeId)} AND excluido_em IS NULL)
+     ON CONFLICT(id) DO UPDATE SET
+         titulo = excluded.titulo, descricao = excluded.descricao, gravidade = excluded.gravidade,
+         status = excluded.status, responsavel_id = excluded.responsavel_id,
+         resolucao = excluded.resolucao, resolvido_em = excluded.resolvido_em,
+         atualizado_em = datetime('now')`,
+    `INSERT INTO ocorrencia_comentarios (id, ocorrencia_id, usuario_id, texto)
+     SELECT
+         'f6100000-0000-4000-8000-000000000001',
+         'f6000000-0000-4000-8000-000000000001',
+         (SELECT id FROM usuarios WHERE papel = 'admin' AND ativo = 1 ORDER BY criado_em LIMIT 1),
+         'Seed de demonstração: confirme a falha, anexe uma imagem e atualize o status como engenharia.'
+     WHERE EXISTS (SELECT 1 FROM ocorrencias WHERE id = 'f6000000-0000-4000-8000-000000000001')
+     ON CONFLICT(id) DO UPDATE SET texto = excluded.texto`,
+  )
 }
 
 await mkdir(temporaryDirectory, { recursive: true })
@@ -113,7 +178,7 @@ try {
   if (result.status !== 0) process.exit(result.status ?? 1)
   console.log(clearOnly
     ? 'Os registros marcados pelo seed foram ocultados do catálogo local.'
-    : `${vehicles.length} códigos de demonstração e 10 itens de checklist para CT-DEMO-001 foram criados ou atualizados no D1 local.`)
+    : `${vehicles.length} códigos, 10 itens de checklist e 2 ocorrências de demonstração para CT-DEMO-001 foram criados ou atualizados no D1 local.`)
 } finally {
   await rm(sqlFile, { force: true })
 }

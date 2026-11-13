@@ -36,6 +36,7 @@ export interface TesteItemRecord {
   observacao: string | null
   testado_por: string | null
   testado_em: string | null
+  ocorrencias_count: number
 }
 
 export interface ResultadoTeste {
@@ -168,9 +169,10 @@ export async function buscarTeste(db: D1Database, id: string): Promise<{ teste: 
   ).bind(id).first<TesteRecord>()
   if (!teste) return null
   const itensResult = await db.prepare(
-    `SELECT id, codigo_item_id, tipo_secao, nome_snapshot, ordem, resultado,
-       observacao, testado_por, testado_em
-     FROM teste_itens WHERE teste_id = ?
+    `SELECT ti.id, ti.codigo_item_id, ti.tipo_secao, ti.nome_snapshot, ti.ordem,
+       ti.resultado, ti.observacao, ti.testado_por, ti.testado_em,
+       (SELECT COUNT(*) FROM ocorrencias o WHERE o.teste_item_id = ti.id) AS ocorrencias_count
+     FROM teste_itens ti WHERE ti.teste_id = ?
      ORDER BY CASE tipo_secao WHEN 'dados_central' THEN 1 WHEN 'sensores' THEN 2
        WHEN 'estados' THEN 3 WHEN 'atuadores' THEN 4 WHEN 'ajuste' THEN 5
        WHEN 'parametrizacao' THEN 6 WHEN 'funcao_avancada' THEN 7 WHEN 'falhas' THEN 8 ELSE 9 END,

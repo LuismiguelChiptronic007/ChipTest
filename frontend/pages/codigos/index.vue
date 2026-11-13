@@ -46,7 +46,7 @@ const statusOptions = [
   { label: 'Cancelados', value: 'cancelado' },
 ]
 const marcaOptions = computed(() => [
-  { label: 'Todas as marcas', value: '' },
+  { label: 'Todas as montadoras', value: '' },
   ...lista.marcas.value.map((marca: string) => ({ label: marca, value: marca })),
 ])
 const setorOptions = computed(() => [
@@ -58,8 +58,7 @@ const ordemOptions = [
   { label: 'Mais antigos', value: 'criado_em:asc' },
   { label: 'Código A–Z', value: 'codigo:asc' },
   { label: 'Código Z–A', value: 'codigo:desc' },
-  { label: 'Marca A–Z', value: 'marca:asc' },
-  { label: 'Ano mais recente', value: 'ano:desc' },
+  { label: 'Montadora A–Z', value: 'marca:asc' },
 ]
 
 const selecionadosPagina = computed(() => lista.codigos.value.filter((codigo: CodigoListItem) => store.selecionados.includes(codigo.id)))
@@ -195,13 +194,12 @@ function exportarCsv() {
   const selecionados = [...registrosSelecionados.value.values()]
   if (!selecionados.length) return
   const linhas = [
-    ['Código', 'Marca', 'Modelo', 'Motor', 'Ano', 'Status do teste', 'Último teste', 'Setor'],
+    ['Código DSD', 'Montadora', 'Sistema', 'Tipo de sistema', 'Status do teste', 'Último teste', 'Setor'],
     ...selecionados.map(codigo => [
       codigo.codigo,
       codigo.marca,
       codigo.modelo,
       codigo.motor,
-      codigo.ano,
       statusDoCodigo(codigo).label,
       formatarData(codigo.ultimo_teste_data),
       codigo.setor,
@@ -282,9 +280,9 @@ onBeforeUnmount(() => {
     <section class="surface-card overflow-hidden">
       <div class="space-y-3 border-b border-border p-4 sm:p-5">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div class="w-full lg:max-w-sm"><UiSearch :model-value="busca" label="Buscar códigos" placeholder="Código, marca ou modelo..." @update:model-value="atualizarBusca" /></div>
+          <div class="w-full lg:max-w-sm"><UiSearch :model-value="busca" label="Buscar códigos" placeholder="DSD, montadora ou sistema..." @update:model-value="atualizarBusca" /></div>
           <div class="flex flex-wrap items-center gap-2 lg:flex-1">
-            <UiSelect id="filtro-marca" label="Marca" :options="marcaOptions" :model-value="store.filtros.marca" @update:model-value="selecionarFiltroMarca" />
+            <UiSelect id="filtro-marca" label="Montadora" :options="marcaOptions" :model-value="store.filtros.marca" @update:model-value="selecionarFiltroMarca" />
             <UiSelect id="filtro-status" label="Status do teste" :options="statusOptions" :model-value="store.filtros.status" @update:model-value="selecionarFiltroStatus" />
             <UiSelect id="filtro-setor" label="Setor" :options="setorOptions" :model-value="store.filtros.setor" @update:model-value="selecionarFiltroSetor" />
           </div>
@@ -335,14 +333,13 @@ onBeforeUnmount(() => {
 
       <template v-else-if="!lista.erro.value && store.visualizacao === 'tabela'">
         <div class="hidden max-h-[620px] overflow-auto md:block">
-          <table class="w-full min-w-[940px] border-separate border-spacing-0 text-left text-xs">
+          <table class="w-full min-w-[860px] border-separate border-spacing-0 text-left text-xs">
             <thead class="sticky top-0 z-10 bg-surface-raised text-[10px] uppercase tracking-[0.12em] text-foreground-subtle">
               <tr>
                 <th v-if="podeExcluir" class="w-10 border-b border-border px-4 py-3"><input type="checkbox" :checked="paginaTodaSelecionada" aria-label="Selecionar todos os códigos desta página" class="h-4 w-4 rounded border-border accent-primary" @change="alternarPaginaTodaSegura"></th>
-                <th scope="col" class="border-b border-border px-4 py-3 font-bold"><button type="button" class="inline-flex items-center gap-1.5" @click="toggleOrder('codigo')">Código <component :is="statusDaOrdem('codigo')" :size="13" /></button></th>
-                <th scope="col" class="border-b border-border px-4 py-3 font-bold"><button type="button" class="inline-flex items-center gap-1.5" @click="toggleOrder('marca')">Veículo <component :is="statusDaOrdem('marca')" :size="13" /></button></th>
-                <th scope="col" class="border-b border-border px-4 py-3 font-bold">Motorização</th>
-                <th scope="col" class="border-b border-border px-4 py-3 font-bold"><button type="button" class="inline-flex items-center gap-1.5" @click="toggleOrder('ano')">Ano <component :is="statusDaOrdem('ano')" :size="13" /></button></th>
+                <th scope="col" class="border-b border-border px-4 py-3 font-bold"><button type="button" class="inline-flex items-center gap-1.5" @click="toggleOrder('codigo')">Código DSD <component :is="statusDaOrdem('codigo')" :size="13" /></button></th>
+                <th scope="col" class="border-b border-border px-4 py-3 font-bold"><button type="button" class="inline-flex items-center gap-1.5" @click="toggleOrder('marca')">Montadora / sistema <component :is="statusDaOrdem('marca')" :size="13" /></button></th>
+                <th scope="col" class="border-b border-border px-4 py-3 font-bold">Tipo de sistema</th>
                 <th scope="col" class="border-b border-border px-4 py-3 font-bold">Último teste</th>
                 <th scope="col" class="border-b border-border px-4 py-3 font-bold">Status</th>
                 <th scope="col" class="border-b border-border px-4 py-3 text-right font-bold">Ações</th>
@@ -354,7 +351,6 @@ onBeforeUnmount(() => {
                 <td class="border-b border-border/70 px-4 py-3.5"><NuxtLink :to="`/codigos/${codigo.id}`" class="font-mono text-xs font-semibold text-primary hover:text-primary-hover">{{ codigo.codigo }}</NuxtLink></td>
                 <td class="border-b border-border/70 px-4 py-3.5"><NuxtLink :to="`/codigos/${codigo.id}`" class="block max-w-[220px] truncate font-semibold text-foreground hover:text-primary">{{ codigo.marca }} {{ codigo.modelo }}</NuxtLink><p v-if="codigo.setor" class="mt-1 text-[10px] text-foreground-subtle">{{ codigo.setor }}</p></td>
                 <td class="border-b border-border/70 px-4 py-3.5 text-foreground-muted">{{ codigo.motor || '—' }}</td>
-                <td class="border-b border-border/70 px-4 py-3.5 font-mono text-foreground-muted">{{ codigo.ano || '—' }}</td>
                 <td class="border-b border-border/70 px-4 py-3.5"><span class="block font-medium text-foreground-muted">{{ formatarData(codigo.ultimo_teste_data) }}</span><span v-if="codigo.ultimo_teste_tipo" class="mt-0.5 block text-[10px] text-foreground-subtle">{{ nomeTipoTeste(codigo.ultimo_teste_tipo) }}</span></td>
                 <td class="border-b border-border/70 px-4 py-3.5"><div class="flex flex-wrap items-center gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone"><component :is="statusDoCodigo(codigo).icon" :size="13" aria-hidden="true" />{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger"><XCircle :size="13" aria-hidden="true" />{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div></td>
                 <td class="border-b border-border/70 px-4 py-3.5"><div class="flex justify-end gap-1 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
@@ -375,7 +371,7 @@ onBeforeUnmount(() => {
               <input v-if="podeExcluir" type="checkbox" :checked="store.selecionados.includes(codigo.id)" :disabled="!podeSelecionar(codigo)" :aria-label="`Selecionar ${codigo.codigo}`" class="h-4 w-4 rounded border-border accent-primary disabled:cursor-not-allowed disabled:opacity-40" @change="alternarSelecaoSegura(codigo)">
             </div>
             <NuxtLink :to="`/codigos/${codigo.id}`" class="mt-2 block text-sm font-semibold">{{ codigo.marca }} {{ codigo.modelo }}</NuxtLink>
-            <p class="mt-1 text-xs text-foreground-muted">{{ codigo.motor || 'Motorização não informada' }}<span v-if="codigo.ano"> · {{ codigo.ano }}</span></p>
+            <p class="mt-1 text-xs text-foreground-muted">{{ codigo.motor || 'Tipo de sistema não informado' }}</p>
             <div class="mt-3 flex flex-wrap gap-1.5"><UiBadge :tone="statusDoCodigo(codigo).tone"><component :is="statusDoCodigo(codigo).icon" :size="13" aria-hidden="true" />{{ statusDoCodigo(codigo).label }}</UiBadge><UiBadge v-if="codigo.ocorrencias_abertas" tone="danger"><XCircle :size="13" aria-hidden="true" />{{ codigo.ocorrencias_abertas }} falha(s)</UiBadge></div>
             <p class="mt-3 text-[10px] text-foreground-subtle">Último teste: {{ formatarData(codigo.ultimo_teste_data) }}</p>
             <div class="mt-3 flex justify-end gap-1 border-t border-border pt-2">
@@ -394,7 +390,7 @@ onBeforeUnmount(() => {
             <div class="min-w-0">
               <NuxtLink :to="`/codigos/${codigo.id}`" class="font-mono text-xs font-bold text-primary hover:text-primary-hover">{{ codigo.codigo }}</NuxtLink>
               <h2 class="mt-2 truncate text-sm font-semibold">{{ codigo.marca }} {{ codigo.modelo }}</h2>
-              <p class="mt-1 truncate text-xs text-foreground-muted">{{ codigo.motor || 'Motorização não informada' }}<span v-if="codigo.ano"> · {{ codigo.ano }}</span></p>
+              <p class="mt-1 truncate text-xs text-foreground-muted">{{ codigo.motor || 'Tipo de sistema não informado' }}</p>
             </div>
             <input v-if="podeExcluir" type="checkbox" :checked="store.selecionados.includes(codigo.id)" :disabled="!podeSelecionar(codigo)" :aria-label="`Selecionar ${codigo.codigo}`" class="h-4 w-4 rounded border-border accent-primary disabled:cursor-not-allowed disabled:opacity-40" @change="alternarSelecaoSegura(codigo)">
           </div>
