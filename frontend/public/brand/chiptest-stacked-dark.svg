@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 640" role="img" aria-labelledby="title description">
+  <title id="title">ChipTest by Chiptronic</title>
+  <desc id="description">Símbolo de circuitos em âmbar sobre fundo carvão, com o nome ChipTest e Chiptronic.</desc>
+  <g fill="none" stroke="#F5A623" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M316 150a100 100 0 1 0 0 160" stroke-width="8"/>
+    <path d="M308 176a68 68 0 1 0 0 108" stroke-width="8"/>
+    <path d="M279 202a36 36 0 1 0 0 56" stroke-width="8"/>
+
+    <path d="M279 202h34v-16h23"/>
+    <path d="M279 230h47"/>
+    <path d="M279 258h30v16h26"/>
+    <circle cx="341" cy="186" r="6" fill="#F5A623" stroke="none"/>
+    <circle cx="332" cy="230" r="6" fill="#F5A623" stroke="none"/>
+    <circle cx="341" cy="274" r="6" fill="#F5A623" stroke="none"/>
+  </g>
+
+  <text x="256" y="426" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Poppins, 'Segoe UI', sans-serif" font-size="62" font-weight="700" letter-spacing="-2">ChipTest</text>
+  <text x="256" y="474" text-anchor="middle" fill="#F5A623" font-family="Inter, Poppins, 'Segoe UI', sans-serif" font-size="18" font-weight="600" letter-spacing="7">CHIPTRONIC</text>
+</svg>
