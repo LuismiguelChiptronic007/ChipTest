@@ -99,7 +99,11 @@ onBeforeUnmount(() => {
       <aside class="interactive no-print sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border bg-surface px-3 py-5 transition-[width] duration-interface lg:flex" :class="sidebarCollapsed ? 'w-[76px]' : 'w-64'">
         <div class="mb-8 flex items-center justify-between gap-2" :class="{ 'flex-col': sidebarCollapsed }">
           <NuxtLink to="/painel" class="flex min-h-10 items-center px-1" aria-label="ChipTest, ir ao painel">
+<<<<<<< HEAD
             <BrandLogo :variant="sidebarCollapsed ? 'symbol' : 'full'" :size="sidebarCollapsed ? 32 : 34" />
+=======
+            <BrandLogo :variant="sidebarCollapsed ? 'symbol' : 'full'" :size="sidebarCollapsed ? 32 : 38" />
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
           </NuxtLink>
           <button
             type="button"
@@ -217,7 +221,11 @@ onBeforeUnmount(() => {
       description="Acesse os módulos disponíveis."
       variant="drawer"
     >
+<<<<<<< HEAD
       <div class="mb-4 border-b border-border pb-4"><BrandLogo variant="full" :size="28" /></div>
+=======
+      <div class="mb-4 border-b border-border pb-4"><BrandLogo variant="full" :size="38" /></div>
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
       <div class="mt-2 max-h-[calc(100vh-12rem)] overflow-y-auto"><AppNavigation @navigate="mobileNavigationOpen = false" /></div>
     </UiOverlay>
 

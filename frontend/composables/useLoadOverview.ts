@@ -1,6 +1,7 @@
 import { computed, onMounted, ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { z } from 'zod'
 
+<<<<<<< HEAD
 const categorySchema = z.enum(['basico', 'sensores', 'atuadores', 'estados', 'ajustes', 'parametrizacoes'])
 const functionImportCategorySchema = z.enum([
   'basico',
@@ -11,6 +12,9 @@ const functionImportCategorySchema = z.enum([
   'parametrizacoes',
   'funcao_avancada',
 ])
+=======
+const categorySchema = z.enum(['basico', 'sensores', 'estados', 'parametrizacoes'])
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 const functionSchema = z.object({
   id: z.string().uuid(),
   overview_id: z.string().uuid(),
@@ -28,6 +32,7 @@ const functionSchema = z.object({
     value: z.string(),
   })),
 })
+<<<<<<< HEAD
 const functionImportRowSchema = z.object({
   id: z.string().uuid(),
   overview_id: z.string().uuid(),
@@ -39,6 +44,8 @@ const functionImportRowSchema = z.object({
   equipment_base: z.string(),
   developed: z.string(),
 })
+=======
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 const responseSchema = z.object({
   codigo: z.object({
     id: z.string().uuid(),
@@ -67,6 +74,7 @@ const responseSchema = z.object({
     checked: z.union([z.boolean(), z.number().int()]),
   })),
   functions: z.array(functionSchema),
+<<<<<<< HEAD
   functionImportRows: z.array(functionImportRowSchema),
   functionCounts: z.record(z.string(), z.number().int().nonnegative()),
   ocorrencias: z.array(z.object({
@@ -74,6 +82,9 @@ const responseSchema = z.object({
     titulo: z.string(),
     status: z.enum(['aberta', 'em_analise', 'resolvida']),
   })),
+=======
+  functionCounts: z.record(z.string(), z.number().int().nonnegative()),
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   tests: z.array(z.object({
     id: z.string().uuid(),
     ocorrencia_id: z.string().uuid(),
@@ -89,6 +100,10 @@ const responseSchema = z.object({
     needs_bench: z.union([z.number().int().min(0).max(1), z.boolean()]).nullable(),
     needs_field: z.union([z.number().int().min(0).max(1), z.boolean()]).nullable(),
     bench_solves: z.union([z.number().int().min(0).max(1), z.boolean()]).nullable(),
+<<<<<<< HEAD
+=======
+    error_title: z.string(),
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     responsibles: z.array(z.object({ id: z.string().uuid(), nome: z.string() })),
   })),
   responsaveisDisponiveis: z.array(z.object({ id: z.string().uuid(), nome: z.string() })),
@@ -104,11 +119,16 @@ export type LoadOverviewInput = {
   sgaPrintUrl: string | null
   systemInfoUrl: string | null
   notes: string | null
+<<<<<<< HEAD
   sgaPrintImage?: File | null
   systemInfoImage?: File | null
 }
 export type LoadFunctionCategory = z.infer<typeof categorySchema>
 export type LoadFunctionImportCategory = z.infer<typeof functionImportCategorySchema>
+=======
+}
+export type LoadFunctionCategory = z.infer<typeof categorySchema>
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 export type LoadFunctionRows = Array<{ item: string; description: string; value: string }>
 
 export function useLoadOverview(codigoId: MaybeRefOrGetter<string>) {
@@ -118,7 +138,11 @@ export function useLoadOverview(codigoId: MaybeRefOrGetter<string>) {
   const base = computed(() => `/api/codigos/${toValue(codigoId)}/visao-geral`)
 
   async function load() {
+<<<<<<< HEAD
     if (!data.value) loading.value = true
+=======
+    loading.value = true
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     error.value = ''
     try {
       const parsed = responseSchema.safeParse(await $fetch<unknown>(base.value))
@@ -132,6 +156,7 @@ export function useLoadOverview(codigoId: MaybeRefOrGetter<string>) {
   }
 
   async function saveOverview(input: LoadOverviewInput) {
+<<<<<<< HEAD
     const { sgaPrintImage, systemInfoImage, ...fields } = input
     if (sgaPrintImage || systemInfoImage) {
       const body = new FormData()
@@ -142,6 +167,9 @@ export function useLoadOverview(codigoId: MaybeRefOrGetter<string>) {
     } else {
       await $fetch(base.value, { method: 'PATCH', body: fields })
     }
+=======
+    await $fetch(base.value, { method: 'PATCH', body: input })
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     await load()
   }
 

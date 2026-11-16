@@ -29,10 +29,14 @@ const codigoId = ref(props.codigoInicial)
 const testeId = ref(props.testeInicial)
 const testeItemId = ref(props.testeItemInicial)
 const codigoItemId = ref(props.codigoItemInicial)
+<<<<<<< HEAD
 const tipoTesteInicial = props.tipoTesteInicial.toLocaleLowerCase('pt-BR')
 const tipoTeste = ref<'bancada' | 'campo' | ''>(
   tipoTesteInicial === 'bancada' || tipoTesteInicial === 'campo' ? tipoTesteInicial : '',
 )
+=======
+const tipoTeste = ref(props.tipoTesteInicial)
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 const titulo = ref(props.tituloInicial)
 const descricao = ref(props.descricaoInicial)
 const gravidade = ref<'baixa' | 'media' | 'alta' | 'critica'>('media')
@@ -268,7 +272,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
     <section class="surface-card space-y-5 p-4 sm:p-6">
+<<<<<<< HEAD
       <div v-if="!codigoInicial" class="grid gap-4 sm:grid-cols-2">
+=======
+      <div class="grid gap-4 sm:grid-cols-2">
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
         <UiField id="ocorrencia-codigo-busca" v-model="codigoBusca" label="Buscar código" placeholder="Digite código, marca ou modelo" />
         <UiSelect
           id="ocorrencia-codigo"
@@ -283,6 +291,7 @@ onBeforeUnmount(() => {
       <div v-if="testeId" class="rounded-control border border-info/20 bg-info-surface/50 p-3 text-xs text-info">
         Ocorrência vinculada ao teste. O item selecionado deve estar reprovado.
       </div>
+<<<<<<< HEAD
       <UiSelect
         id="ocorrencia-tipo-teste"
         v-model="tipoTeste"
@@ -293,6 +302,9 @@ onBeforeUnmount(() => {
           { value: 'campo', label: 'Campo' },
         ]"
       />
+=======
+      <UiField id="ocorrencia-tipo-teste" v-model="tipoTeste" label="Tipo de Teste" placeholder="Informe o tipo de teste" maxlength="120" />
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
       <UiField id="ocorrencia-titulo" v-model="titulo" label="Título" placeholder="Resuma o erro observado" maxlength="180" />
       <div class="space-y-2">
         <label for="ocorrencia-descricao" class="block text-sm font-semibold">Descrição</label>

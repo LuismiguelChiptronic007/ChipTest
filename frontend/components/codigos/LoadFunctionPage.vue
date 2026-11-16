@@ -8,6 +8,10 @@ import {
   useLoadFunctions,
 } from '../../composables/useLoadFunctions'
 import LoadFunctionRows from './LoadFunctionRows.vue'
+<<<<<<< HEAD
+=======
+import LoadOverviewNavigation from './LoadOverviewNavigation.vue'
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 
 const route = useRoute()
 const codigoId = computed(() => String(route.params.id))
@@ -100,6 +104,17 @@ async function deleteFunction() {
 
     <AppAlert v-if="error" tone="error" class="mb-4">{{ error }}</AppAlert>
 
+<<<<<<< HEAD
+=======
+    <div v-if="data" class="mb-6">
+      <LoadOverviewNavigation
+        :codigo-id="codigoId"
+        :active="3"
+        :first-function-slug="data.functions[0] ? functionSlug(data.functions[0].category, data.functions[0].sequence) : undefined"
+      />
+    </div>
+
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     <div v-if="loading" class="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]"><UiCard><UiSkeleton variant="block" /></UiCard><UiCard><UiSkeleton variant="block" /></UiCard></div>
     <div v-else-if="data" class="grid gap-4 lg:grid-cols-[250px_minmax(0,1fr)]">
       <aside class="surface-card h-fit p-3">

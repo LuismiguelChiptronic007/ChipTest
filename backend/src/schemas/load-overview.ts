@@ -1,12 +1,17 @@
 import { z } from 'zod'
 
+<<<<<<< HEAD
 export const categoriasFuncao = ['basico', 'sensores', 'atuadores', 'estados', 'ajustes', 'parametrizacoes'] as const
+=======
+export const categoriasFuncao = ['basico', 'sensores', 'estados', 'parametrizacoes'] as const
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 export const chavesDocumento = ['simulacao', 'interpretacao', 'codigo_falhas', 'rg_dsd_12'] as const
 
 const textoOpcional = (max: number) => z.string().trim().max(max).nullish().transform(value => value || null)
 const urlOpcional = z.string().trim().url('Informe uma URL válida.')
   .refine(value => /^https?:\/\//i.test(value), 'A URL deve começar com http:// ou https://.')
   .nullish().transform(value => value || null)
+<<<<<<< HEAD
 const urlOuImagemInternaOpcional = z.union([
   z.string().trim().url('Informe uma URL válida.')
     .refine(value => /^https?:\/\//i.test(value), 'A URL deve começar com http:// ou https://.'),
@@ -15,6 +20,8 @@ const urlOuImagemInternaOpcional = z.union([
     'Informe uma URL válida ou cole uma imagem.',
   ),
 ]).nullish().transform(value => value || null)
+=======
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 
 export const atualizarLoadOverviewSchema = z.object({
   requestNumber: z.number().int().positive('O número da solicitação deve ser positivo.'),
@@ -26,8 +33,13 @@ export const atualizarLoadOverviewSchema = z.object({
   responsibleId: z.string().uuid().nullable(),
   demandType: z.enum(['novo_sistema', 'nova_funcao']),
   demandStatus: z.enum(['campo_com_programador', 'campo_sem_programador']),
+<<<<<<< HEAD
   sgaPrintUrl: urlOuImagemInternaOpcional,
   systemInfoUrl: urlOuImagemInternaOpcional,
+=======
+  sgaPrintUrl: urlOpcional,
+  systemInfoUrl: urlOpcional,
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   notes: textoOpcional(10000),
 })
 

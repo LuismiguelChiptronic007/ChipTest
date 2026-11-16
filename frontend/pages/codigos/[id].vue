@@ -1,9 +1,17 @@
 <script setup lang="ts">
+<<<<<<< HEAD
 import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Clock3, Copy, FileText, LayoutDashboard, MessageSquare, MinusCircle, Pencil, RefreshCw, ShieldAlert, Trash2, Upload, XCircle } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { z } from 'zod'
 import { tipoSecaoBancoSchema, type TipoSecaoBanco } from '@backend/schemas/importacoes'
 import type { CodigoRecord } from '@backend/services/codigos'
+=======
+import { Activity, AlertTriangle, ArrowLeft, CheckCircle2, Clock3, Copy, FileText, History, MessageSquare, MinusCircle, Pencil, RefreshCw, ShieldAlert, Trash2, Upload, XCircle } from '@lucide/vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { z } from 'zod'
+import { tipoSecaoBancoSchema, type TipoSecaoBanco } from '@backend/schemas/importacoes'
+import type { AlteracaoCodigo, CodigoRecord } from '@backend/services/codigos'
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 import LoadOverviewPinnedItem from '../../components/codigos/LoadOverviewPinnedItem.vue'
 
 const route = useRoute()
@@ -13,11 +21,19 @@ const codigoId = computed(() => String(route.params.id))
 const carregando = ref(true)
 const erro = ref('')
 const codigo = ref<CodigoRecord | null>(null)
+<<<<<<< HEAD
 const carregandoSecoes = ref(false)
 const carregandoTestes = ref(false)
 const aba = ref<'visao_geral' | 'secoes' | 'ocorrencias'>(
   route.query.aba === 'ocorrencias' ? 'ocorrencias' : route.query.aba === 'secoes' ? 'secoes' : 'visao_geral',
 )
+=======
+const alteracoes = ref<AlteracaoCodigo[]>([])
+const carregandoHistorico = ref(false)
+const carregandoSecoes = ref(false)
+const carregandoTestes = ref(false)
+const aba = ref<'secoes' | 'alteracoes' | 'ocorrencias'>(route.query.aba === 'ocorrencias' ? 'ocorrencias' : 'secoes')
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 const ocorrencias = ref<Array<{
   id: string
   titulo: string
@@ -106,6 +122,20 @@ const codigoResponseSchema = z.object({
     ocorrencias_abertas: z.number().int().nonnegative(),
   }),
 })
+<<<<<<< HEAD
+=======
+const historicoResponseSchema = z.object({
+  alteracoes: z.array(z.object({
+    id: z.string().uuid(),
+    usuario_id: z.string().nullable(),
+    usuario_nome: z.string().nullable(),
+    antes: z.record(z.string(), z.unknown()).nullable(),
+    depois: z.record(z.string(), z.unknown()).nullable(),
+    criado_em: z.string(),
+  })),
+})
+
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 const podeGerenciar = computed(() => auth.can('codigos:gerenciar'))
 const podeExcluir = computed(() => auth.can('codigos:excluir'))
 const podeIniciarTeste = computed(() => Boolean(auth.perfil.value?.ativo))
@@ -125,6 +155,38 @@ const status = computed(() => {
   return { label: 'Sem testes', tone: 'neutral' as const, icon: ShieldAlert }
 })
 
+<<<<<<< HEAD
+=======
+const rotulosCampos: Record<string, string> = {
+  codigo: 'Código DSD',
+  marca: 'Montadora',
+  modelo: 'Sistema',
+  motor: 'Tipo de sistema',
+  ano: 'Ano',
+  observacoes: 'Observações',
+  excluido_em: 'Exclusão lógica',
+}
+
+function valorCampo(valor: unknown) {
+  if (valor === null || valor === undefined || valor === '') return '—'
+  if (typeof valor === 'object') return JSON.stringify(valor)
+  return String(valor)
+}
+
+function camposAlterados(item: AlteracaoCodigo) {
+  const antes = item.antes ?? {}
+  const depois = item.depois ?? {}
+  const campos = new Set([...Object.keys(antes), ...Object.keys(depois)])
+  return [...campos]
+    .filter(campo => campo !== 'id' && valorCampo(antes[campo]) !== valorCampo(depois[campo]))
+    .map(campo => ({
+      nome: rotulosCampos[campo] ?? campo,
+      antes: valorCampo(antes[campo]),
+      depois: valorCampo(depois[campo]),
+    }))
+}
+
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 function formatarData(data: string) {
   const valor = new Date(data.length === 10 ? `${data}T12:00:00` : data)
   return Number.isNaN(valor.getTime())
@@ -240,6 +302,22 @@ async function carregarSecoes() {
   }
 }
 
+<<<<<<< HEAD
+=======
+async function carregarHistorico() {
+  carregandoHistorico.value = true
+  try {
+    const resposta = historicoResponseSchema.safeParse(await $fetch<unknown>(`/api/codigos/${codigoId.value}/historico`))
+    if (!resposta.success) throw new Error('O histórico recebido está em um formato inválido.')
+    alteracoes.value = resposta.data.alteracoes
+  } catch (error: unknown) {
+    erro.value = mensagemDeErro(error, 'Não foi possível carregar o histórico de alterações.')
+  } finally {
+    carregandoHistorico.value = false
+  }
+}
+
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 async function duplicarCodigo() {
   if (!codigo.value) return
   erro.value = ''
@@ -291,7 +369,12 @@ async function carregarOcorrenciasCodigo() {
   }
 }
 
+<<<<<<< HEAD
 watch(aba, (value: 'visao_geral' | 'secoes' | 'ocorrencias') => {
+=======
+watch(aba, (value: 'secoes' | 'alteracoes' | 'ocorrencias') => {
+  if (value === 'alteracoes' && !alteracoes.value.length) void carregarHistorico()
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   if (value === 'ocorrencias' && !carregouOcorrencias.value) void carregarOcorrenciasCodigo()
 })
 
@@ -360,8 +443,13 @@ onMounted(() => {
       </section>
 
       <div class="mt-5 flex gap-1 border-b border-border" role="tablist" aria-label="Informações do código">
+<<<<<<< HEAD
         <button type="button" role="tab" :aria-selected="aba === 'visao_geral'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'visao_geral' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'visao_geral'"><LayoutDashboard :size="15" aria-hidden="true" /> Visão geral</button>
         <button type="button" role="tab" :aria-selected="aba === 'secoes'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'secoes' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'secoes'"><FileText :size="15" aria-hidden="true" /> Seções técnicas</button>
+=======
+        <button type="button" role="tab" :aria-selected="aba === 'secoes'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'secoes' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'secoes'"><FileText :size="15" aria-hidden="true" /> Seções técnicas</button>
+        <button type="button" role="tab" :aria-selected="aba === 'alteracoes'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'alteracoes' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'alteracoes'"><History :size="15" aria-hidden="true" /> Histórico de alterações</button>
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
         <button type="button" role="tab" :aria-selected="aba === 'ocorrencias'" class="interactive -mb-px inline-flex min-h-10 items-center gap-2 border-b-2 px-3 text-xs font-semibold" :class="aba === 'ocorrencias' ? 'border-primary text-primary' : 'border-transparent text-foreground-muted hover:text-foreground'" @click="aba = 'ocorrencias'"><MessageSquare :size="15" aria-hidden="true" /> Ocorrências <UiBadge :tone="ocorrenciasAbertas.length ? 'warning' : 'neutral'">{{ ocorrenciasAbertas.length }}</UiBadge></button>
       </div>
 
@@ -461,7 +549,36 @@ onMounted(() => {
         </aside>
       </div>
 
+<<<<<<< HEAD
       <section v-else-if="aba === 'ocorrencias'" class="surface-card mt-4 p-4 sm:p-5">
+=======
+      <section v-else-if="aba === 'alteracoes'" class="surface-card mt-4 p-4 sm:p-5">
+        <div class="flex items-start justify-between gap-4 border-b border-border pb-4">
+          <div><h2 class="text-sm font-bold">Histórico de alterações</h2><p class="mt-1 text-xs text-foreground-muted">Registro de criação, edição e exclusão lógica deste código.</p></div>
+          <UiButton variant="secondary" size="sm" :loading="carregandoHistorico" @click="carregarHistorico"><template #icon><RefreshCw :size="14" aria-hidden="true" /></template>Atualizar</UiButton>
+        </div>
+        <div v-if="carregandoHistorico" class="space-y-3 py-4"><UiSkeleton v-for="item in 3" :key="item" variant="block" /></div>
+        <ul v-else-if="alteracoes.length" class="divide-y divide-border">
+          <li v-for="item in alteracoes" :key="item.id" class="grid gap-3 py-4 sm:grid-cols-[160px_minmax(0,1fr)]">
+            <div><p class="text-xs font-semibold">{{ item.usuario_nome || 'Usuário removido' }}</p><p class="mt-1 text-[10px] text-foreground-subtle">{{ formatarData(item.criado_em) }}</p></div>
+            <div>
+              <p class="text-xs font-semibold">{{ item.antes ? item.depois?.excluido_em ? 'Código excluído logicamente' : 'Cadastro atualizado' : 'Código criado' }}</p>
+              <div v-if="camposAlterados(item).length" class="mt-2 overflow-x-auto rounded-control border border-border">
+                <table class="w-full min-w-[440px] text-left text-[11px]">
+                  <thead class="bg-surface-raised text-foreground-subtle"><tr><th class="px-3 py-2 font-semibold">Campo</th><th class="px-3 py-2 font-semibold">Antes</th><th class="px-3 py-2 font-semibold">Depois</th></tr></thead>
+                  <tbody><tr v-for="campo in camposAlterados(item)" :key="campo.nome" class="border-t border-border"><td class="px-3 py-2 font-medium">{{ campo.nome }}</td><td class="px-3 py-2 text-foreground-muted">{{ campo.antes }}</td><td class="px-3 py-2 text-foreground">{{ campo.depois }}</td></tr></tbody>
+                </table>
+              </div>
+              <p v-else class="mt-1 text-[11px] text-foreground-muted">Sem campos alterados disponíveis.</p>
+            </div>
+          </li>
+        </ul>
+        <div v-else class="py-5">
+          <UiEmptyState title="Ainda não há alterações registradas" description="As mudanças feitas neste cadastro serão exibidas nesta linha do tempo." :icon="History" />
+        </div>
+      </section>
+      <section v-else class="surface-card mt-4 p-4 sm:p-5">
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
         <div class="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
           <div><h2 class="text-sm font-bold">Ocorrências do código</h2><p class="mt-1 text-xs text-foreground-muted">{{ ocorrenciasAbertas.length }} aberta(s) · {{ ocorrenciasResolvidas.length }} resolvida(s)</p></div>
           <NuxtLink :to="`/ocorrencias/criar?codigo=${codigo.id}`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control bg-primary px-3 text-xs font-semibold text-primary-foreground hover:bg-primary-hover"><AlertTriangle :size="14" aria-hidden="true" /> Nova ocorrência</NuxtLink>

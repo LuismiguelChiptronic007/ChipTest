@@ -1,7 +1,12 @@
 <script setup lang="ts">
 const props = defineProps<{
   codigoId: string
+<<<<<<< HEAD
   active: 1 | 2
+=======
+  active: 1 | 2 | 3
+  firstFunctionSlug?: string
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 }>()
 </script>
 
@@ -20,7 +25,27 @@ const props = defineProps<{
       class="interactive inline-flex min-h-9 items-center rounded-full border border-border bg-surface px-4 text-xs font-semibold text-foreground-muted hover:border-border-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       :class="{ 'border-primary/50 bg-info-surface/60 text-primary hover:border-primary': active === 2 }"
     >
+<<<<<<< HEAD
       2 · Informações da carga
     </NuxtLink>
+=======
+      2 · Visão geral
+    </NuxtLink>
+
+    <NuxtLink
+      v-if="firstFunctionSlug"
+      :to="{ path: `/codigos/${codigoId}/funcao`, query: { funcao: firstFunctionSlug } }"
+      class="interactive inline-flex min-h-9 items-center rounded-full border border-border bg-surface px-4 text-xs font-semibold text-foreground-muted hover:border-border-strong hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      :class="{ 'border-primary/50 bg-info-surface/60 text-primary hover:border-primary': active === 3 }"
+    >
+      3 · Tela da função
+    </NuxtLink>
+    <span
+      v-else
+      class="inline-flex min-h-9 cursor-not-allowed items-center rounded-full border border-border bg-surface/50 px-4 text-xs font-semibold text-foreground-subtle opacity-50"
+    >
+      3 · Tela da função
+    </span>
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   </nav>
 </template>

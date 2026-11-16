@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { ArrowLeft, Pencil, RefreshCw, Trash2 } from '@lucide/vue'
+<<<<<<< HEAD
 import type { LoadOverviewInput } from '../../composables/useLoadOverview'
 import { useLoadOverview } from '../../composables/useLoadOverview'
 import LoadOverviewNavigation from './LoadOverviewNavigation.vue'
 import LoadDocsChecklist from './LoadDocsChecklist.vue'
 import LoadFunctionImport from './LoadFunctionImport.vue'
+=======
+import type { LoadFunctionCategory, LoadOverviewInput } from '../../composables/useLoadOverview'
+import { useLoadOverview } from '../../composables/useLoadOverview'
+import LoadOverviewNavigation from './LoadOverviewNavigation.vue'
+import LoadDocsChecklist from './LoadDocsChecklist.vue'
+import LoadFunctionCards from './LoadFunctionCards.vue'
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 import LoadOverviewForm from './LoadOverviewForm.vue'
 import LoadTestsTable from './LoadTestsTable.vue'
 
@@ -20,17 +28,27 @@ const {
   load,
   saveOverview,
   setDoc,
+<<<<<<< HEAD
+=======
+  addFunction,
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   removeOverview,
 } = useLoadOverview(codigoId)
 
 const editing = ref(false)
 const saving = ref(false)
+<<<<<<< HEAD
 const importingFunctions = ref(false)
 const importedFunctionsVersion = ref(0)
 const docSaving = ref('')
 const deleting = ref(false)
 const aviso = ref('')
 const overviewFormRef = ref<{ salvar: () => void } | null>(null)
+=======
+const adding = ref(false)
+const docSaving = ref('')
+const deleting = ref(false)
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 
 function demandTypeLabel(value: string) {
   return value === 'nova_funcao' ? 'Nova Função' : 'Novo Sistema'
@@ -45,6 +63,10 @@ async function save(input: LoadOverviewInput) {
   error.value = ''
   try {
     await saveOverview(input)
+<<<<<<< HEAD
+=======
+    editing.value = false
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   } catch (cause: unknown) {
     error.value = mensagemDeErro(cause, 'Não foi possível salvar a visão geral.')
   } finally {
@@ -52,10 +74,13 @@ async function save(input: LoadOverviewInput) {
   }
 }
 
+<<<<<<< HEAD
 function salvarQuadro() {
   overviewFormRef.value?.salvar()
 }
 
+=======
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 async function toggleDoc(key: string, checked: boolean) {
   docSaving.value = key
   error.value = ''
@@ -69,6 +94,7 @@ async function toggleDoc(key: string, checked: boolean) {
   }
 }
 
+<<<<<<< HEAD
 async function importarDocumento(file: File) {
   if (importingFunctions.value) return
   if (
@@ -93,6 +119,22 @@ async function importarDocumento(file: File) {
     error.value = mensagemDeErro(cause, 'Não foi possível importar a planilha de funções.')
   } finally {
     importingFunctions.value = false
+=======
+async function criarFuncao(category: LoadFunctionCategory) {
+  adding.value = true
+  error.value = ''
+  try {
+    const id = await addFunction(category)
+    const func = data.value?.functions.find(item => item.id === id)
+    if (func) await navigateTo({
+      path: `/codigos/${codigoId.value}/funcao`,
+      query: { funcao: `${func.category}-${String(func.sequence).padStart(2, '0')}` },
+    })
+  } catch (cause: unknown) {
+    error.value = mensagemDeErro(cause, 'Não foi possível criar a função.')
+  } finally {
+    adding.value = false
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   }
 }
 
@@ -118,7 +160,11 @@ function formatDate(value: string | null) {
 </script>
 
 <template>
+<<<<<<< HEAD
   <AppShell :title="data ? `${data.codigo.codigo} - ${data.codigo.modelo}` : 'Informações da carga'" description="Dados da demanda, funções solicitadas, documentação e tabela de testes.">
+=======
+  <AppShell :title="data ? `${data.codigo.codigo} - ${data.codigo.modelo}` : 'Visão geral da carga'" description="Dados da demanda, funções solicitadas, documentação e tabela de testes.">
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     <template #actions>
       <NuxtLink :to="`/codigos/${codigoId}?aba=ocorrencias`" class="interactive inline-flex min-h-9 items-center gap-2 rounded-control border border-border bg-surface px-3 text-xs font-semibold hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <ArrowLeft :size="14" aria-hidden="true" />Voltar à lista
@@ -138,6 +184,10 @@ function formatDate(value: string | null) {
       <LoadOverviewNavigation
         :codigo-id="codigoId"
         :active="2"
+<<<<<<< HEAD
+=======
+        :first-function-slug="data.functions[0] ? `${data.functions[0].category}-${String(data.functions[0].sequence).padStart(2, '0')}` : undefined"
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
         class="mb-6"
       />
 
@@ -152,10 +202,18 @@ function formatDate(value: string | null) {
         <h2 id="load-data-title" class="text-sm font-bold">Dados da demanda</h2>
         <div v-if="editing && canEdit" class="mt-4">
           <LoadOverviewForm
+<<<<<<< HEAD
             ref="overviewFormRef"
             :overview="data.overview"
             :responsaveis="data.responsaveisDisponiveis"
             @save="save"
+=======
+            :overview="data.overview"
+            :responsaveis="data.responsaveisDisponiveis"
+            :saving="saving"
+            @save="save"
+            @cancel="editing = false"
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
           />
         </div>
         <dl v-else class="mt-4 grid gap-x-8 gap-y-5 sm:grid-cols-2">
@@ -177,6 +235,7 @@ function formatDate(value: string | null) {
         <div class="mt-6 border-t border-border pt-5">
           <div class="mb-3 flex items-center justify-between gap-3">
             <h3 class="text-sm font-bold">Funções solicitadas</h3>
+<<<<<<< HEAD
             <span class="text-xs text-foreground-muted">{{ data.functionImportRows.length }} {{ data.functionImportRows.length === 1 ? 'função importada' : 'funções importadas' }}</span>
           </div>
           <AppAlert v-if="aviso" tone="success" class="mb-3">{{ aviso }}</AppAlert>
@@ -187,11 +246,24 @@ function formatDate(value: string | null) {
             :collapse-key="importedFunctionsVersion"
             @import-document="importarDocumento"
           />
+=======
+            <span class="text-xs text-foreground-muted">{{ data.functions.length }} {{ data.functions.length === 1 ? 'tela' : 'telas' }}</span>
+          </div>
+          <LoadFunctionCards
+            :codigo-id="codigoId"
+            :functions="data.functions"
+            :can-edit="editing && canEdit"
+            :adding="adding"
+            @add="criarFuncao"
+          />
+          <p v-if="!data.functions.length && !editing" class="rounded-control border border-dashed border-border p-5 text-center text-sm text-foreground-muted">Nenhuma função cadastrada.</p>
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
         </div>
       </section>
 
       <section class="surface-card mt-4 p-4 sm:p-5" aria-labelledby="load-docs-title">
         <div class="mb-4"><h2 id="load-docs-title" class="text-sm font-bold">Documentação necessária presente</h2><p class="mt-1 text-xs text-foreground-muted">Marque os documentos recebidos; a atualização é salva imediatamente.</p></div>
+<<<<<<< HEAD
         <LoadDocsChecklist :docs="data.docs" :disabled="!canEdit || !editing || Boolean(docSaving)" @toggle="toggleDoc" />
       </section>
 
@@ -210,6 +282,15 @@ function formatDate(value: string | null) {
         <UiButton variant="secondary" :disabled="saving" @click="editing = false">Cancelar</UiButton>
         <UiButton variant="primary" :loading="saving" @click="salvarQuadro">Salvar quadro</UiButton>
       </div>
+=======
+        <LoadDocsChecklist :docs="data.docs" :disabled="!canEdit || Boolean(docSaving)" @toggle="toggleDoc" />
+      </section>
+
+      <section class="surface-card mt-4 p-4 sm:p-5" aria-labelledby="load-tests-title">
+        <div class="mb-4"><h2 id="load-tests-title" class="text-sm font-bold">Tabela de testes realizados</h2><p class="mt-1 text-xs text-foreground-muted">Gerada a partir dos testes associados aos erros desta DSD. Selecione um teste para abrir o erro.</p></div>
+        <LoadTestsTable :codigo-id="codigoId" :tests="data.tests" />
+      </section>
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     </template>
   </AppShell>
 </template>

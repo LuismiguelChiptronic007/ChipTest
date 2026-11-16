@@ -5,7 +5,11 @@ import {
   criarTesteOcorrenciaSchema,
   iniciarAnexoTesteOcorrenciaSchema,
 } from '../schemas/ocorrencia-testes'
+<<<<<<< HEAD
 import { atualizarLoadOverviewSchema, criarLoadFunctionSchema } from '../schemas/load-overview'
+=======
+import { atualizarLoadOverviewSchema } from '../schemas/load-overview'
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 import { identificarTesteCarga } from './ocorrencia-testes'
 
 const testeValido = {
@@ -71,6 +75,7 @@ describe('validação de testes vinculados a ocorrências', () => {
       notes: null,
     }
     expect(atualizarLoadOverviewSchema.safeParse(overview).success).toBe(true)
+<<<<<<< HEAD
     expect(atualizarLoadOverviewSchema.safeParse({
       ...overview,
       sgaPrintUrl: '/api/codigos/11111111-1111-4111-8111-111111111111/visao-geral/imagens/22222222-2222-4222-8222-222222222222',
@@ -85,6 +90,12 @@ describe('validação de testes vinculados a ocorrências', () => {
     expect(criarLoadFunctionSchema.safeParse({ category: 'ajustes' }).success).toBe(true)
   })
 
+=======
+    expect(atualizarLoadOverviewSchema.safeParse({ ...overview, sgaPrintUrl: 'javascript:alert(1)' }).success).toBe(false)
+    expect(atualizarLoadOverviewSchema.safeParse({ ...overview, launchedOn: '2026-02-31' }).success).toBe(false)
+  })
+
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   it('rejeita um tipo de teste ou uma data inválidos', () => {
     expect(criarTesteOcorrenciaSchema.safeParse({ ...testeValido, kind: 'misto' }).success).toBe(false)
     expect(criarTesteOcorrenciaSchema.safeParse({ ...testeValido, testedAt: 'ontem' }).success).toBe(false)

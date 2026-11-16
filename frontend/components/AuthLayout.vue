@@ -2,7 +2,11 @@
   <main class="min-h-screen bg-canvas text-foreground lg:grid lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)]">
     <aside class="auth-circuit relative hidden min-h-screen flex-col justify-between overflow-hidden p-10 text-auth-foreground lg:flex xl:p-14">
       <div class="relative z-10">
+<<<<<<< HEAD
         <BrandLogo variant="full" :size="44" />
+=======
+        <BrandLogo variant="full" tone="inverse" :size="44" />
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
       </div>
 
       <div class="relative z-10 max-w-xl">

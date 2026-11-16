@@ -7,9 +7,13 @@ export type LoadFunction = LoadOverviewData['functions'][number]
 const categoryNames: Record<LoadFunctionCategory, string> = {
   basico: 'Básico',
   sensores: 'Sensores',
+<<<<<<< HEAD
   atuadores: 'Atuadores',
   estados: 'Estados',
   ajustes: 'Ajustes',
+=======
+  estados: 'Estados',
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   parametrizacoes: 'Parametrizações',
 }
 

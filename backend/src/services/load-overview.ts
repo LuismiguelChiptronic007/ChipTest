@@ -9,9 +9,13 @@ const docs = ['simulacao', 'interpretacao', 'codigo_falhas', 'rg_dsd_12'] as con
 const nomesCategoria = {
   basico: 'Básico',
   sensores: 'Sensores',
+<<<<<<< HEAD
   atuadores: 'Atuadores',
   estados: 'Estados',
   ajustes: 'Ajustes',
+=======
+  estados: 'Estados',
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   parametrizacoes: 'Parametrizações',
 } as const
 
@@ -53,7 +57,11 @@ async function garantirVisaoGeral(db: D1Database, codigoId: string) {
 export async function obterVisaoGeralCarga(db: D1Database, codigoId: string) {
   if (!await garantirVisaoGeral(db, codigoId)) return null
 
+<<<<<<< HEAD
   const [codigo, overview, docsResult, funcoesResult, linhasResult, funcoesImportadasResult, ocorrenciasResult, testesResult, responsaveisResult] = await db.batch([
+=======
+  const [codigo, overview, docsResult, funcoesResult, linhasResult, testesResult, responsaveisResult] = await db.batch([
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     db.prepare(
       `SELECT id, codigo, marca, modelo, motor FROM codigos
        WHERE id = ? AND excluido_em IS NULL`,
@@ -72,8 +80,12 @@ export async function obterVisaoGeralCarga(db: D1Database, codigoId: string) {
     ).bind(codigoId),
     db.prepare(
       `SELECT id, overview_id, category, sequence, title, print_url, created_at
+<<<<<<< HEAD
        FROM load_functions
        WHERE overview_id = (SELECT id FROM load_overviews WHERE codigo_id = ?)
+=======
+       FROM load_functions WHERE overview_id = (SELECT id FROM load_overviews WHERE codigo_id = ?)
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
        ORDER BY category, sequence`,
     ).bind(codigoId),
     db.prepare(
@@ -84,6 +96,7 @@ export async function obterVisaoGeralCarga(db: D1Database, codigoId: string) {
        ORDER BY f.category, f.sequence, r.position`,
     ).bind(codigoId),
     db.prepare(
+<<<<<<< HEAD
       `SELECT id, overview_id, category, position, version_ontime, function_type,
          function_dieseldiag, equipment_base, developed
        FROM load_function_import_rows
@@ -102,6 +115,11 @@ export async function obterVisaoGeralCarga(db: D1Database, codigoId: string) {
       `SELECT t.id, t.ocorrencia_id, t.kind, t.sequence, t.tested_at, t.status,
          t.segment, t.model, t.version, t.load_status, t.structure_status,
          t.needs_bench, t.needs_field, t.bench_solves
+=======
+      `SELECT t.id, t.ocorrencia_id, t.kind, t.sequence, t.tested_at, t.status,
+         t.segment, t.model, t.version, t.load_status, t.structure_status,
+         t.needs_bench, t.needs_field, t.bench_solves, o.titulo AS error_title
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
        FROM ocorrencia_testes t
        JOIN ocorrencias o ON o.id = t.ocorrencia_id
        WHERE o.codigo_id = ?
@@ -163,8 +181,11 @@ export async function obterVisaoGeralCarga(db: D1Database, codigoId: string) {
     docs: docsResult.results,
     functions: funcoes,
     functionCounts: counts,
+<<<<<<< HEAD
     functionImportRows: funcoesImportadasResult.results,
     ocorrencias: ocorrenciasResult.results,
+=======
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
     tests: testes,
     responsaveisDisponiveis: usuarios.results,
   }

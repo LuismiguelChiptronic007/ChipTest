@@ -275,7 +275,10 @@ async function prepararOcorrencia(item: ItemTeste) {
       dsdCodigo: teste.value.codigo,
       marca: teste.value.marca,
       modelo: teste.value.modelo,
+<<<<<<< HEAD
       tipoTeste: teste.value.tipo,
+=======
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
       teste: teste.value.id,
       testeItem: item.id,
       ...(item.codigo_item_id ? { codigoItem: item.codigo_item_id } : {}),
@@ -478,7 +481,10 @@ onBeforeUnmount(() => {
                     dsdCodigo: teste.codigo,
                     marca: teste.marca,
                     modelo: teste.modelo,
+<<<<<<< HEAD
                     tipoTeste: teste.tipo,
+=======
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
                     teste: teste.id,
                     testeItem: item.id,
                     ...(item.codigo_item_id ? { codigoItem: item.codigo_item_id } : {}),

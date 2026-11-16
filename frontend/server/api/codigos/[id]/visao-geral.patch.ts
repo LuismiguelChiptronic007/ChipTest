@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { getHeader, readBody, readMultipartFormData } from 'h3'
 import { atualizarLoadOverviewSchema } from '@backend/schemas/load-overview'
 import { TAMANHO_MAXIMO_ANEXO_BYTES, TAMANHO_PARTE_ANEXO_BYTES } from '@backend/services/ocorrencias-config'
@@ -8,10 +9,15 @@ import {
   gravarArquivoD1,
   validarConteudoAnexo,
 } from '../../../utils/arquivos-d1'
+=======
+import { atualizarLoadOverviewSchema } from '@backend/schemas/load-overview'
+import { atualizarVisaoGeralCarga } from '@backend/services/load-overview'
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
 import { exigirGerenciarCodigos } from '../../../utils/codigos'
 import { getDatabase } from '../../../utils/database'
 import { obterCodigoId } from '../../../utils/load-overview'
 
+<<<<<<< HEAD
 const extensoesImagem = {
   'image/png': 'png',
   'image/jpeg': 'jpg',
@@ -79,12 +85,19 @@ export default defineEventHandler(async (event) => {
   }
 
   const entrada = atualizarLoadOverviewSchema.safeParse(corpo)
+=======
+export default defineEventHandler(async (event) => {
+  await exigirGerenciarCodigos(event)
+  const codigoId = obterCodigoId(event)
+  const entrada = atualizarLoadOverviewSchema.safeParse(await readBody(event))
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   if (!entrada.success) {
     throw createError({
       statusCode: 400,
       statusMessage: entrada.error.issues[0]?.message ?? 'Confira os dados da visão geral.',
     })
   }
+<<<<<<< HEAD
 
   const db = getDatabase(event)
   const overview = await db.prepare(
@@ -172,5 +185,9 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+=======
+  const atualizado = await atualizarVisaoGeralCarga(getDatabase(event), codigoId, entrada.data)
+  if (!atualizado) throw createError({ statusCode: 404, statusMessage: 'DSD não encontrada.' })
+>>>>>>> 41adb1fc253204582bb8dd3c45979b8c141581c3
   return { sucesso: true }
 })
